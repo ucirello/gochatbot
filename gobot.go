@@ -20,9 +20,13 @@ type Self struct {
 	ProviderIn  chan IncomingMessage
 }
 
-type Provider struct {
+type Provider interface {
 	OutgoingChannel() chan OutgoingMessage
 	IncomingChannel() chan IncomingMessage
+}
+
+type RuleParser interface {
+	ParseMessage(*Rule, *IncomingMessage) []*OutgoingMessage
 }
 
 func main() {
