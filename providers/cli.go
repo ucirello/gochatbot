@@ -47,16 +47,16 @@ func (c *providerCLI) loop() {
 		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
 			c.in <- messages.Message{
-				Room:         "CLI",
-				FromUserID:   "",
-				FromUserName: "",
-				Message:      scanner.Text(),
+				Room:     "CLI",
+				UserID:   "",
+				UserName: "",
+				Message:  scanner.Text(),
 			}
 		}
 	}()
 	go func() {
 		for msg := range c.out {
-			fmt.Fprintln(outPrompt, "\nout:>", msg.Room, msg.FromUserID, msg.FromUserName, ":", msg.Message)
+			fmt.Fprintln(outPrompt, "\nout:>", msg.Room, msg.UserID, msg.UserName, ":", msg.Message)
 		}
 	}()
 }

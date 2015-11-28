@@ -1,14 +1,11 @@
 package regex
 
-import (
-	"cirello.io/gochatbot/bot"
-	"cirello.io/gochatbot/messages"
-)
+import "cirello.io/gochatbot/bot"
 
 var regexRules = []regexRule{
 	{
-		`{{ .RobotName }} jump`, func(bot bot.Self, in messages.Message) []messages.Message {
-			return []messages.Message{{Message: "How high?"}}
+		`{{ .RobotName }} jump`, func(bot bot.Self, msg string) []string {
+			return []string{"{{ .User }}, How high?"}
 		},
 	},
 }

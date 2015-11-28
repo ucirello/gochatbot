@@ -3,8 +3,8 @@ package providers
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/websocket"
 
@@ -26,8 +26,10 @@ func init() {
 const URLSlackAPI = "https://slack.com/api/"
 
 type providerSlack struct {
-	token string
-	wsURL string
+	token  string
+	wsURL  string
+	wsConn *websocket.Conn
+	selfID string
 
 	in  chan messages.Message
 	out chan messages.Message
@@ -41,8 +43,11 @@ func Slack(token string) *providerSlack {
 		in:    make(chan messages.Message),
 		out:   make(chan messages.Message),
 	}
-	slack.connect()
-	slack.talk()
+	slack.handshake()
+	slack.dial()
+	if slack.err == nil {
+		go slack.loop()
+	}
 	return slack
 }
 
@@ -58,7 +63,7 @@ func (p *providerSlack) Error() error {
 	return p.err
 }
 
-func (p *providerSlack) connect() {
+func (p *providerSlack) handshake() {
 	resp, err := http.Get(fmt.Sprint(URLSlackAPI, "rtm.start?no_unreads&simple_latest&token=", p.token))
 	if err != nil {
 		p.err = err
@@ -66,8 +71,11 @@ func (p *providerSlack) connect() {
 	}
 	defer resp.Body.Close()
 	var data struct {
-		OK  interface{} `json:"ok"`
-		URL string      `json:"url"`
+		OK   interface{} `json:"ok"`
+		URL  string      `json:"url"`
+		Self struct {
+			ID string `json:"id"`
+		} `json:"self"`
 	}
 	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
 		p.err = err
@@ -86,20 +94,64 @@ func (p *providerSlack) connect() {
 		return
 	}
 	p.wsURL = data.URL
+	p.selfID = data.Self.ID
 }
 
-func (p *providerSlack) talk() {
+func (p *providerSlack) dial() {
 	ws, err := websocket.Dial(p.wsURL, "", URLSlackAPI)
 	if err != nil {
 		p.err = err
 		return
 	}
+	p.wsConn = ws
+}
 
-	var msg = make([]byte, 512)
-	var n int
-	if n, err = ws.Read(msg); err != nil {
-		p.err = err
-		return
-	}
-	log.Printf("Received: %s.\n", msg[:n])
+func (p *providerSlack) loop() {
+	go func() {
+		for {
+			var data struct {
+				Type    string `json:"type"`
+				Channel string `json:"channel"`
+				UserID  string `json:"user"`
+				Text    string `json:"text"`
+			}
+			if err := json.NewDecoder(p.wsConn).Decode(&data); err != nil {
+				continue
+			}
+			if data.Type != "message" {
+				continue
+			}
+
+			msg := messages.Message{
+				Room:    data.Channel,
+				UserID:  data.UserID,
+				Message: data.Text,
+				Direct:  strings.HasPrefix(data.Channel, "D"),
+			}
+			p.in <- msg
+		}
+	}()
+
+	go func() {
+		for msg := range p.out {
+			data := struct {
+				Type    string `json:"type"`
+				User    string `json:"user"`
+				Channel string `json:"channel"`
+				Text    string `json:"text"`
+			}{"message", p.selfID, msg.Room, msg.Message}
+
+			// TODO(carlos): look for an idiomatic way of doing limited writers
+			b, err := json.Marshal(data)
+			if err != nil {
+				continue
+			}
+
+			wsMsg := string(b)
+			if len(wsMsg) > 16*1024 {
+				continue
+			}
+			fmt.Fprint(p.wsConn, wsMsg)
+		}
+	}()
 }

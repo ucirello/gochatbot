@@ -25,7 +25,7 @@ func TestProviderCLI(t *testing.T) {
 	}
 
 	outChan := cli.OutgoingChannel()
-	outChan <- messages.Message{Room: "room", FromUserID: "uid", FromUserName: "name", Message: rawMsg}
+	outChan <- messages.Message{Room: "room", UserID: "uid", UserName: "name", Message: rawMsg}
 	close(outChan)
 
 	to := time.After(5 * time.Second)
