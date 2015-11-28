@@ -1,4 +1,4 @@
-package rules // import "cirello.io/gochatbot/rules"
+package echo // import "cirello.io/gochatbot/rules/echo"
 
 import (
 	"strings"
@@ -33,7 +33,7 @@ func (e *echoRule) ParseMessage(bot bot.Self, in messages.Message) []messages.Me
 	return []messages.Message{}
 }
 
-// Echo returns an echo rule set
-func Echo() *echoRule {
+// New returns an echo rule set
+func New() *echoRule {
 	return new(echoRule)
 }

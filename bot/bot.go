@@ -10,7 +10,7 @@ import (
 // Self encapsulates all the necessary state to have a robot running. Including
 // identity (Name).
 type Self struct {
-	Name        string
+	name        string
 	providerOut chan messages.Message
 	providerIn  chan messages.Message
 	rules       []RuleParser
@@ -25,7 +25,7 @@ type Option func(*Self)
 // New creates a new gobot.
 func New(name string, opts ...Option) *Self {
 	s := &Self{
-		Name:        name,
+		name:        name,
 		brain:       brain.New(),
 		providerIn:  make(chan messages.Message),
 		providerOut: make(chan messages.Message),
@@ -62,4 +62,8 @@ func (s *Self) MemoryRead(ruleName, key string) interface{} {
 // MemorySave reads an arbitraty value from the robot's Brain.
 func (s *Self) MemorySave(ruleName, key string, value interface{}) {
 	s.brain.Save(ruleName, key, value)
+}
+
+func (s *Self) Name() string {
+	return s.name
 }

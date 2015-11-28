@@ -44,7 +44,6 @@ func (p *providerCLI) Error() error {
 
 func (c *providerCLI) loop() {
 	go func() {
-		fmt.Fprint(inPrompt, "in:> ")
 		scanner := bufio.NewScanner(stdin)
 		for scanner.Scan() {
 			c.in <- messages.Message{
@@ -53,7 +52,6 @@ func (c *providerCLI) loop() {
 				FromUserName: "",
 				Message:      scanner.Text(),
 			}
-			fmt.Fprint(inPrompt, "in:> ")
 		}
 	}()
 	go func() {

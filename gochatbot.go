@@ -6,15 +6,15 @@ import (
 
 	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/providers"
-	"cirello.io/gochatbot/rules"
+	"cirello.io/gochatbot/rules/regex"
 )
 
 func main() {
 	provider := providers.Detect(os.Getenv)
 	robot := bot.New(
-		"gobot",
+		"gochatbot",
 		bot.MessageProvider(provider),
-		bot.RegisterRule(rules.Echo()),
+		bot.RegisterRule(regex.New()),
 	)
 	if err := provider.Error(); err != nil {
 		log.Fatalln("error in message provider:", err)
