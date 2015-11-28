@@ -1,0 +1,4 @@
+package: main
+import:
+- package: golang.org/x/net
+  version: 55cccaa02af1a99c69ba3213e33468628b61be4b
