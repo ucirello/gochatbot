@@ -1,9 +1,9 @@
-package main // import "cirello.io/gobot"
+package main // import "cirello.io/gochatbot"
 
 import (
-	"cirello.io/gobot/bot"
-	"cirello.io/gobot/providers"
-	"cirello.io/gobot/rules"
+	"cirello.io/gochatbot/bot"
+	"cirello.io/gochatbot/providers"
+	"cirello.io/gochatbot/rules"
 )
 
 func main() {

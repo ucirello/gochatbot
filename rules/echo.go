@@ -1,10 +1,10 @@
-package rules // import "cirello.io/gobot/rules"
+package rules // import "cirello.io/gochatbot/rules"
 
 import (
 	"strings"
 
-	"cirello.io/gobot/bot"
-	"cirello.io/gobot/messages"
+	"cirello.io/gochatbot/bot"
+	"cirello.io/gochatbot/messages"
 )
 
 // echoRule is a demonstration rule to prove that the basic bot functionality is

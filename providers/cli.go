@@ -1,4 +1,4 @@
-package providers // import "cirello.io/gobot/providers"
+package providers // import "cirello.io/gochatbot/providers"
 
 import (
 	"bufio"
@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	"cirello.io/gobot/messages"
+	"cirello.io/gochatbot/messages"
 )
 
 var (

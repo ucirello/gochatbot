@@ -1,10 +1,10 @@
-package bot // import "cirello.io/gobot/bot"
+package bot // import "cirello.io/gochatbot/bot"
 
 import (
 	"sync"
 
-	"cirello.io/gobot/brain"
-	"cirello.io/gobot/messages"
+	"cirello.io/gochatbot/brain"
+	"cirello.io/gochatbot/messages"
 )
 
 // Self encapsulates all the necessary state to have a robot running. Including

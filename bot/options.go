@@ -1,6 +1,6 @@
 package bot
 
-import "cirello.io/gobot/messages"
+import "cirello.io/gochatbot/messages"
 
 // Provider explains the interface for pluggable message providers (CLI, Slack,
 // IRC etc.)

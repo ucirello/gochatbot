@@ -1,4 +1,4 @@
-package brain // import "cirello.io/gobot/brain"
+package brain // import "cirello.io/gochatbot/brain"
 
 import "sync"
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"cirello.io/gobot/messages"
+	"cirello.io/gochatbot/messages"
 )
 
 func TestProviderCLI(t *testing.T) {
