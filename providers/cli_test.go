@@ -2,7 +2,6 @@ package providers
 
 import (
 	"bytes"
-	"io/ioutil"
 	"strings"
 	"testing"
 	"time"
@@ -13,7 +12,6 @@ import (
 func TestProviderCLI(t *testing.T) {
 	const rawMsg = "hello world"
 	stdin = strings.NewReader(rawMsg)
-	inPrompt = ioutil.Discard
 	var buf bytes.Buffer
 	outPrompt = &buf
 
@@ -25,7 +23,7 @@ func TestProviderCLI(t *testing.T) {
 	}
 
 	outChan := cli.OutgoingChannel()
-	outChan <- messages.Message{Room: "room", UserID: "uid", UserName: "name", Message: rawMsg}
+	outChan <- messages.Message{Room: "room", ToUserID: "uid", ToUserName: "name", Message: rawMsg}
 	close(outChan)
 
 	to := time.After(5 * time.Second)

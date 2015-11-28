@@ -41,15 +41,13 @@ func (r regexRuleset) ParseMessage(bot bot.Self, in messages.Message) []messages
 		if ret := rule.ParseMessage(bot, in.Message); len(ret) > 0 {
 			var retMsgs []messages.Message
 			for _, m := range ret {
-				var finalMsg bytes.Buffer
-				template.Must(template.New("tmpl").Parse(m)).Execute(&finalMsg, struct{ User string }{"<@" + in.UserID + ">"})
 				retMsgs = append(
 					retMsgs,
 					messages.Message{
-						Room:     in.Room,
-						UserID:   in.UserID,
-						UserName: in.UserName,
-						Message:  finalMsg.String(),
+						Room:       in.Room,
+						ToUserID:   in.FromUserID,
+						ToUserName: in.FromUserName,
+						Message:    m,
 					},
 				)
 			}

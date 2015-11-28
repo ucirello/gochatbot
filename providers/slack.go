@@ -1,8 +1,10 @@
 package providers
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
+	"html/template"
 	"net/http"
 	"strings"
 	"time"
@@ -125,10 +127,10 @@ func (p *providerSlack) loop() {
 			}
 
 			msg := messages.Message{
-				Room:    data.Channel,
-				UserID:  data.UserID,
-				Message: data.Text,
-				Direct:  strings.HasPrefix(data.Channel, "D"),
+				Room:       data.Channel,
+				FromUserID: data.UserID,
+				Message:    data.Text,
+				Direct:     strings.HasPrefix(data.Channel, "D"),
 			}
 			p.in <- msg
 		}
@@ -136,6 +138,9 @@ func (p *providerSlack) loop() {
 
 	go func() {
 		for msg := range p.out {
+			var finalMsg bytes.Buffer
+			template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
+
 			data := struct {
 				Type    string `json:"type"`
 				User    string `json:"user"`
