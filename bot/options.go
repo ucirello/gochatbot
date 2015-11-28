@@ -7,6 +7,7 @@ import "cirello.io/gochatbot/messages"
 type Provider interface {
 	IncomingChannel() chan messages.Message
 	OutgoingChannel() chan messages.Message
+	Error() error
 }
 
 // MessageProvider is the self-referencing option that plugs Message Providers

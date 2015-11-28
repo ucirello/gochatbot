@@ -38,6 +38,10 @@ func (c *providerCLI) OutgoingChannel() chan messages.Message {
 	return c.out
 }
 
+func (p *providerCLI) Error() error {
+	return nil
+}
+
 func (c *providerCLI) loop() {
 	go func() {
 		fmt.Fprint(inPrompt, "in:> ")
