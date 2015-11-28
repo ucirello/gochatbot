@@ -38,7 +38,7 @@ func (c *providerCLI) OutgoingChannel() chan messages.Message {
 	return c.out
 }
 
-func (p *providerCLI) Error() error {
+func (c *providerCLI) Error() error {
 	return nil
 }
 

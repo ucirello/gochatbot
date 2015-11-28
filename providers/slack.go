@@ -11,19 +11,20 @@ import (
 	"cirello.io/gochatbot/messages"
 )
 
-const SlackEnvVarName = "GOCHATBOT_SLACK_TOKEN"
+const (
+	slackEnvVarName = "GOCHATBOT_SLACK_TOKEN"
+	urlSlackAPI     = "https://slack.com/api/"
+)
 
 func init() {
 	availableProviders = append(availableProviders, func(getenv func(string) string) Provider {
-		token := getenv(SlackEnvVarName)
+		token := getenv(slackEnvVarName)
 		if token == "" {
 			return nil
 		}
 		return Slack(token)
 	})
 }
-
-const URLSlackAPI = "https://slack.com/api/"
 
 type providerSlack struct {
 	token  string
@@ -64,7 +65,7 @@ func (p *providerSlack) Error() error {
 }
 
 func (p *providerSlack) handshake() {
-	resp, err := http.Get(fmt.Sprint(URLSlackAPI, "rtm.start?no_unreads&simple_latest&token=", p.token))
+	resp, err := http.Get(fmt.Sprint(urlSlackAPI, "rtm.start?no_unreads&simple_latest&token=", p.token))
 	if err != nil {
 		p.err = err
 		return
@@ -98,7 +99,7 @@ func (p *providerSlack) handshake() {
 }
 
 func (p *providerSlack) dial() {
-	ws, err := websocket.Dial(p.wsURL, "", URLSlackAPI)
+	ws, err := websocket.Dial(p.wsURL, "", urlSlackAPI)
 	if err != nil {
 		p.err = err
 		return

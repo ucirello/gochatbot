@@ -12,7 +12,7 @@ func TestDetect(t *testing.T) {
 	}{
 		{
 			func(name string) string {
-				if name == SlackEnvVarName {
+				if name == slackEnvVarName {
 					return "some token"
 				}
 				return ""
