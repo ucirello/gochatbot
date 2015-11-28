@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"strings"
 	"testing"
+	"time"
 
 	"cirello.io/gobot/messages"
 )
@@ -26,5 +27,19 @@ func TestProviderCLI(t *testing.T) {
 	outChan := cli.OutgoingChannel()
 	outChan <- messages.Message{Room: "room", FromUserID: "uid", FromUserName: "name", Message: rawMsg}
 	close(outChan)
-	t.Log(buf.String())
+
+	to := time.After(5 * time.Second)
+	for buf.Len() == 0 {
+		select {
+		case <-to:
+			t.Fatal("could not read output buffer")
+		default:
+		}
+	}
+
+	const expectedOutPrompt = "\nout:> room uid name : hello world\n"
+	gotOut := buf.String()
+	if expectedOutPrompt != gotOut {
+		t.Errorf("wrong output prompt. Expected output:%v. Got: %v", expectedOutPrompt, gotOut)
+	}
 }
