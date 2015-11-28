@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"strings"
+	"time"
 
 	"golang.org/x/net/websocket"
 
@@ -153,6 +154,7 @@ func (p *providerSlack) loop() {
 				continue
 			}
 			fmt.Fprint(p.wsConn, wsMsg)
+			time.Sleep(1 * time.Second) // https://api.slack.com/docs/rate-limits
 		}
 	}()
 }
