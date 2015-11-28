@@ -13,8 +13,8 @@ type Provider interface {
 // into the robot.
 func MessageProvider(provider Provider) Option {
 	return func(s *Self) {
-		s.ProviderIn = provider.IncomingChannel()
-		s.ProviderOut = provider.OutgoingChannel()
+		s.providerIn = provider.IncomingChannel()
+		s.providerOut = provider.OutgoingChannel()
 	}
 }
 
@@ -28,6 +28,6 @@ type RuleParser interface {
 // RegisterRule is the self-referencing option that plugs Rules into the robot.
 func RegisterRule(rule RuleParser) Option {
 	return func(s *Self) {
-		s.Rules = append(s.Rules, rule)
+		s.rules = append(s.rules, rule)
 	}
 }
