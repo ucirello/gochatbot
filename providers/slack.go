@@ -11,6 +11,18 @@ import (
 	"cirello.io/gochatbot/messages"
 )
 
+const SlackEnvVarName = "GOCHATBOT_SLACK_TOKEN"
+
+func init() {
+	availableProviders = append(availableProviders, func(getenv func(string) string) Provider {
+		token := getenv(SlackEnvVarName)
+		if token == "" {
+			return nil
+		}
+		return Slack(token)
+	})
+}
+
 const URLSlackAPI = "https://slack.com/api/"
 
 type providerSlack struct {

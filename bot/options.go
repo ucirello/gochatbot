@@ -1,18 +1,13 @@
 package bot
 
-import "cirello.io/gochatbot/messages"
-
-// Provider explains the interface for pluggable message providers (CLI, Slack,
-// IRC etc.)
-type Provider interface {
-	IncomingChannel() chan messages.Message
-	OutgoingChannel() chan messages.Message
-	Error() error
-}
+import (
+	"cirello.io/gochatbot/messages"
+	"cirello.io/gochatbot/providers"
+)
 
 // MessageProvider is the self-referencing option that plugs Message Providers
 // into the robot.
-func MessageProvider(provider Provider) Option {
+func MessageProvider(provider providers.Provider) Option {
 	return func(s *Self) {
 		s.providerIn = provider.IncomingChannel()
 		s.providerOut = provider.OutgoingChannel()

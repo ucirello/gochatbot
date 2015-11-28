@@ -10,13 +10,7 @@ import (
 )
 
 func main() {
-	slackToken := os.Getenv("GOCHATBOT_SLACK_TOKEN")
-	var provider bot.Provider
-	if slackToken != "" {
-		provider = providers.Slack(slackToken)
-	} else {
-		provider = providers.CLI()
-	}
+	provider := providers.Detect(os.Getenv)
 	robot := bot.New(
 		"gobot",
 		bot.MessageProvider(provider),
