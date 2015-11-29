@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
+	availableDrivers = append(availableDrivers, func(getenv func(string) string) (Memorizer, bool) {
 		log.Println("brain: trying registering bolt")
 		memo, ok := BoltFromEnv(getenv)
 		if ok {
@@ -23,7 +23,7 @@ func init() {
 }
 
 type BoltMemory struct {
-	brain *BrainMemory
+	brain *brainMemory
 	bolt  *bolt.DB
 
 	err error

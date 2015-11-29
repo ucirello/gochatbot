@@ -5,7 +5,7 @@ package brain
 import "log"
 
 func init() {
-	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
+	availableDrivers = append(availableDrivers, func(getenv func(string) string) (Memorizer, bool) {
 		log.Println("You have not built gochatbot with any durable database.")
 		log.Println("It will not persist state across service restarts.")
 		log.Println("Consider rebuilding it choosing one or more of these drivers:")

@@ -33,6 +33,7 @@ func RegisterRuleset(rule RuleParser) Option {
 	}
 }
 
+// RegisterMemorizer plugs a durable memory to the robot's brain.
 func RegisterMemorizer(memo brain.Memorizer) Option {
 	return func(s *Self) {
 		log.Printf("bot: registering memorizer %T\n", memo)

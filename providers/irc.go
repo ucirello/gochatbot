@@ -15,6 +15,7 @@ import (
 	ircevent "github.com/thoj/go-ircevent"
 )
 
+// IRC message provider configuration environment variables.
 const (
 	IrcUserEnvVarName     = "GOCHATBOT_IRC_USER"
 	IrcNickEnvVarName     = "GOCHATBOT_IRC_NICK"
@@ -49,6 +50,7 @@ type providerIRC struct {
 	err      error
 }
 
+// IRC returns the IRC message provider
 func IRC(user, nick, server, channels, password, useTLS string) *providerIRC {
 	pi := &providerIRC{
 		channels: strings.Split(channels, ","),

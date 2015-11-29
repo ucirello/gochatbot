@@ -10,7 +10,7 @@ import (
 )
 
 func init() {
-	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
+	availableDrivers = append(availableDrivers, func(getenv func(string) string) (Memorizer, bool) {
 		log.Println("brain: trying registering redis")
 		memo, ok := RedisFromEnv(getenv)
 		if ok {
@@ -23,7 +23,7 @@ func init() {
 }
 
 type RedisMemory struct {
-	brain *BrainMemory
+	brain *brainMemory
 	db    *redis.Client
 
 	err error
