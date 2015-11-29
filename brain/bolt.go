@@ -1,3 +1,5 @@
+// +build all bolt
+
 package brain // import "cirello.io/gochatbot/brain"
 
 import (
