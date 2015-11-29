@@ -2,22 +2,22 @@ package brain // import "cirello.io/gochatbot/brain"
 
 import "sync"
 
-// Brain is the basic memory facility for the gobot.
-type Brain struct {
+// BrainMemory is the basic memory facility for the gobot.
+type BrainMemory struct {
 	mu    sync.Mutex             // serializes items access
 	items map[string]interface{} // rule name + key
 }
 
-// New constructs Brain
-func New() *Brain {
-	b := &Brain{
+// Brain constructs BrainMemory
+func Brain() *BrainMemory {
+	b := &BrainMemory{
 		items: make(map[string]interface{}),
 	}
 	return b
 }
 
 // Save stores into Brain some arbritary value.
-func (b *Brain) Save(ruleName, key string, value interface{}) {
+func (b *BrainMemory) Save(ruleName, key string, value interface{}) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -26,7 +26,7 @@ func (b *Brain) Save(ruleName, key string, value interface{}) {
 }
 
 // Read reads from Brain some arbritary value.
-func (b *Brain) Read(ruleName, key string) interface{} {
+func (b *BrainMemory) Read(ruleName, key string) interface{} {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -36,6 +36,10 @@ func (b *Brain) Read(ruleName, key string) interface{} {
 		return nil
 	}
 	return v
+}
+
+func (b *BrainMemory) Error() error {
+	return nil
 }
 
 func fullKeyName(ruleName, key string) string {

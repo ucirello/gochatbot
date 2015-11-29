@@ -5,14 +5,14 @@ import (
 	"os"
 
 	"cirello.io/gochatbot/bot"
-	"cirello.io/gochatbot/brain/memory"
+	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/providers"
 	"cirello.io/gochatbot/rules/regex"
 )
 
 func main() {
 	provider := providers.Detect(os.Getenv)
-	memory := memory.Bolt()
+	memory := brain.Detect(os.Getenv)
 	robot := bot.New(
 		"gochatbot",
 		bot.MessageProvider(provider),

@@ -1,25 +1,42 @@
-package memory // import "cirello.io/gochatbot/brain/memory"
+package brain // import "cirello.io/gochatbot/brain"
 
 import (
 	"encoding/json"
 
-	"cirello.io/gochatbot/brain"
 	"github.com/boltdb/bolt"
 )
 
+func init() {
+	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
+		return BoltFromEnv(getenv)
+	})
+}
+
 type BoltMemory struct {
-	brain *brain.Brain
+	brain *BrainMemory
 	bolt  *bolt.DB
 
 	err error
 }
 
-func Bolt() *BoltMemory {
+const (
+	boltMemoryFilename = "GOCHATBOT_BOLT_FILENAME"
+)
+
+func BoltFromEnv(getenv func(string) string) (*BoltMemory, bool) {
+	fn := getenv(boltMemoryFilename)
+	if fn == "" {
+		return nil, false
+	}
+	return Bolt(fn), true
+}
+
+func Bolt(dbFn string) *BoltMemory {
 	b := &BoltMemory{
-		brain: brain.New(),
+		brain: Brain(),
 	}
 
-	db, err := bolt.Open("gochatbot.db", 0600, nil)
+	db, err := bolt.Open(dbFn, 0600, nil)
 	if err != nil {
 		b.err = err
 		return nil

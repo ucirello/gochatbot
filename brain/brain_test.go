@@ -3,7 +3,7 @@ package brain
 import "testing"
 
 func TestBrain(t *testing.T) {
-	brain := New()
+	brain := Brain()
 	brain.Save("fake", "key", 1)
 	if len(brain.items) != 1 {
 		t.Error("error storing values in Brain. Expected 1 item. Got:", len(brain.items))

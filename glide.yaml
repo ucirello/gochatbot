@@ -3,11 +3,17 @@ import:
 - package: golang.org/x/net
   version: 55cccaa02af1a99c69ba3213e33468628b61be4b
 - package: golang.org/x/text
+  version: e6847002810c51f892a128333573eac5e2a62024
   subpackages:
   - /encoding
 - package: golang.org/x/crypto
+  version: beef0f4390813b96e8e68fd78570396d0f4751fc
   subpackages:
   - /ssh/terminal
 - package: github.com/boltdb/bolt
+  version: 6e1ca38c6a73025366cd8705553b404746ee6e63
   subpackages:
   - /...
+- package: gopkg.in/redis.v3
+  version: 54a9acc11fe8e6aa91905e3c032aa8b4f871bc9b
+- package: gopkg.in/bsm/ratelimit.v1

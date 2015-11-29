@@ -1,6 +1,7 @@
 package bot
 
 import (
+	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/messages"
 	"cirello.io/gochatbot/providers"
 )
@@ -28,12 +29,7 @@ func RegisterRuleset(rule RuleParser) Option {
 	}
 }
 
-type Memorizer interface {
-	Save(ruleName, key string, value interface{})
-	Read(ruleName, key string) interface{}
-}
-
-func RegisterMemorizer(memo Memorizer) Option {
+func RegisterMemorizer(memo brain.Memorizer) Option {
 	return func(s *Self) {
 		s.brain = memo
 	}

@@ -15,7 +15,7 @@ type Self struct {
 	providerIn  chan messages.Message
 	rules       []RuleParser
 
-	brain Memorizer
+	brain brain.Memorizer
 }
 
 var processOnce sync.Once // protects Process
@@ -27,7 +27,7 @@ type Option func(*Self)
 func New(name string, opts ...Option) *Self {
 	s := &Self{
 		name:        name,
-		brain:       brain.New(),
+		brain:       brain.Brain(),
 		providerIn:  make(chan messages.Message),
 		providerOut: make(chan messages.Message),
 	}
