@@ -8,3 +8,6 @@ import:
 - package: golang.org/x/crypto
   subpackages:
   - /ssh/terminal
+- package: github.com/boltdb/bolt
+  subpackages:
+  - /...

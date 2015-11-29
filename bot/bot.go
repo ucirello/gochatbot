@@ -15,7 +15,7 @@ type Self struct {
 	providerIn  chan messages.Message
 	rules       []RuleParser
 
-	brain *brain.Brain
+	brain Memorizer
 }
 
 var processOnce sync.Once // protects Process

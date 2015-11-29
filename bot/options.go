@@ -21,9 +21,20 @@ type RuleParser interface {
 	ParseMessage(Self, messages.Message) []messages.Message
 }
 
-// RegisterRule is the self-referencing option that plugs Rules into the robot.
-func RegisterRule(rule RuleParser) Option {
+// RegisterRuleset is the self-referencing option that plugs Rules into the robot.
+func RegisterRuleset(rule RuleParser) Option {
 	return func(s *Self) {
 		s.rules = append(s.rules, rule)
+	}
+}
+
+type Memorizer interface {
+	Save(ruleName, key string, value interface{})
+	Read(ruleName, key string) interface{}
+}
+
+func RegisterMemorizer(memo Memorizer) Option {
+	return func(s *Self) {
+		s.brain = memo
 	}
 }

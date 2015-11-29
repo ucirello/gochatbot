@@ -27,3 +27,4 @@ gobot
 gochatbot
 
 vendor/
+gochatbot.db
