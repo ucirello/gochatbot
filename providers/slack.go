@@ -53,6 +53,7 @@ func Slack(token string) *providerSlack {
 	if slack.err == nil {
 		go slack.loop()
 	}
+	go slack.reconnect()
 	return slack
 }
 
@@ -164,4 +165,15 @@ func (p *providerSlack) loop() {
 			time.Sleep(1 * time.Second) // https://api.slack.com/docs/rate-limits
 		}
 	}()
+}
+
+func (p *providerSlack) reconnect() {
+	for {
+		_, err := p.wsConn.Write([]byte(`{"type":"hello"}`))
+		if err != nil {
+			p.handshake()
+			p.dial()
+		}
+		time.Sleep(1 * time.Second)
+	}
 }
