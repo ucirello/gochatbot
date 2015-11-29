@@ -15,6 +15,8 @@ func init() {
 		memo, ok := RedisFromEnv(getenv)
 		if ok {
 			log.Println("brain: registered redis")
+		} else {
+			log.Println("brain: if you want Redis enabled, please set a valid value for the environment variables", redisMemoryDatabase, redisMemoryHostPort, redisMemoryPassword)
 		}
 		return memo, ok
 	})

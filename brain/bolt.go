@@ -15,6 +15,8 @@ func init() {
 		memo, ok := BoltFromEnv(getenv)
 		if ok {
 			log.Println("brain: registered bolt")
+		} else {
+			log.Println("brain: if you want BoltDB enabled, please set a valid value for the environment variable", boltMemoryFilename)
 		}
 		return memo, ok
 	})
