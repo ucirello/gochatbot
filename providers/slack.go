@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"html"
 	"html/template"
 	"net/http"
 	"strings"
@@ -138,6 +139,7 @@ func (p *providerSlack) loop() {
 
 	go func() {
 		for msg := range p.out {
+			// TODO(ccf): find a way in that text/template does not escape username DMs.
 			var finalMsg bytes.Buffer
 			template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
 
@@ -146,9 +148,9 @@ func (p *providerSlack) loop() {
 				User    string `json:"user"`
 				Channel string `json:"channel"`
 				Text    string `json:"text"`
-			}{"message", p.selfID, msg.Room, msg.Message}
+			}{"message", p.selfID, msg.Room, html.UnescapeString(finalMsg.String())}
 
-			// TODO(carlos): look for an idiomatic way of doing limited writers
+			// TODO(ccf): look for an idiomatic way of doing limited writers
 			b, err := json.Marshal(data)
 			if err != nil {
 				continue
