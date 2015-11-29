@@ -17,3 +17,8 @@ import:
 - package: gopkg.in/redis.v3
   version: 54a9acc11fe8e6aa91905e3c032aa8b4f871bc9b
 - package: gopkg.in/bsm/ratelimit.v1
+  version: fbc2d5a2daac4dc3801ee3073874800e2be6ccd1
+- package: github.com/Syfaro/telegram-bot-api
+  version: 6960b6fd7985a30c07edbf810480fe0a2bc1b7dc
+- package: github.com/technoweenie/multipartstreamer
+  version: a90a01d73ae432e2611d178c18367fbaa13e0154
