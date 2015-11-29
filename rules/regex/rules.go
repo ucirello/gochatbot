@@ -9,7 +9,8 @@ import (
 
 var regexRules = []regexRule{
 	{
-		`{{ .RobotName }} jump`, func(bot bot.Self, msg string) []string {
+		`{{ .RobotName }} jump`, `tells the robot to jump`,
+		func(bot bot.Self, msg string, matches []string) []string {
 			var ret []string
 			ret = append(ret, "{{ .User }}, How high?")
 			lastJumpTS := bot.MemoryRead("jump", "lastJump")

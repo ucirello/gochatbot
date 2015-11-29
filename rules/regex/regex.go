@@ -2,6 +2,7 @@ package regex // import "cirello.io/gochatbot/rules/regex"
 
 import (
 	"bytes"
+	"fmt"
 	"regexp"
 	"strings"
 	"text/template"
@@ -12,7 +13,8 @@ import (
 
 type regexRule struct {
 	Regex        string
-	ParseMessage func(bot.Self, string) []string
+	HelpMessage  string
+	ParseMessage func(bot.Self, string, []string) []string
 }
 
 type regexRuleset struct {
@@ -24,21 +26,44 @@ func (r regexRuleset) Name() string {
 	return "Regex Ruleset"
 }
 
-func (r regexRuleset) ParseMessage(bot bot.Self, in messages.Message) []messages.Message {
+func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
+	regexRules = append(regexRules,
+		regexRule{
+			`{{ .RobotName }} help`, `this help screen`,
+			func(self bot.Self, msg string, _ []string) []string {
+				botName := self.Name()
+				ret := fmt.Sprintln("available commands:")
+				for _, rule := range regexRules {
+					var finalRegex bytes.Buffer
+					r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
+
+					ret = ret + fmt.Sprintln(finalRegex.String(), "-", rule.HelpMessage)
+				}
+				return []string{ret}
+			},
+		},
+	)
+
 	for _, rule := range regexRules {
-		botName := bot.Name()
+		botName := self.Name()
 		if in.Direct {
 			botName = ""
 		}
 
 		var finalRegex bytes.Buffer
+		if _, ok := r.regexes[rule.Regex]; !ok {
+			r.regexes[rule.Regex] = template.Must(template.New(rule.Regex).Parse(rule.Regex))
+		}
 		r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
-		matched, err := regexp.MatchString(strings.TrimSpace(finalRegex.String()), in.Message)
-		if err != nil || !matched {
+		sanitizedRegex := strings.TrimSpace(finalRegex.String())
+		re := regexp.MustCompile(sanitizedRegex)
+		matched := re.MatchString(in.Message)
+		if !matched {
 			continue
 		}
 
-		if ret := rule.ParseMessage(bot, in.Message); len(ret) > 0 {
+		args := re.FindStringSubmatch(in.Message)
+		if ret := rule.ParseMessage(self, in.Message, args); len(ret) > 0 {
 			var retMsgs []messages.Message
 			for _, m := range ret {
 				retMsgs = append(
