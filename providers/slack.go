@@ -22,14 +22,13 @@ const (
 )
 
 func init() {
-	availableProviders = append(availableProviders, func(getenv func(string) string) Provider {
+	availableProviders = append(availableProviders, func(getenv func(string) string) (Provider, bool) {
 		token := getenv(slackEnvVarName)
 		if token == "" {
-			return nil
-		} else {
 			log.Println("providers: if you want Slack enabled, please set a valid value for the environment variables", slackEnvVarName)
+			return nil, false
 		}
-		return Slack(token)
+		return Slack(token), true
 	})
 }
 

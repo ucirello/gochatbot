@@ -14,14 +14,18 @@ type Provider interface {
 	Error() error
 }
 
-var availableProviders []func(func(string) string) Provider
+var availableProviders []func(func(string) string) (Provider, bool)
 
 // Detect try all available providers, and return the one which manages to
 // configure itself by inspecting the environment. If all fail, them CLI is
 // returned.
 func Detect(getenv func(string) string) Provider {
 	for _, ap := range availableProviders {
-		if ret := ap(getenv); ret != nil {
+		if ret, ok := ap(getenv); ok {
+			if ret.Error() != nil {
+				log.Printf("providers: %T %v", ret, ret.Error())
+				continue
+			}
 			return ret
 		}
 	}

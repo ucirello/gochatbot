@@ -16,14 +16,13 @@ const (
 )
 
 func init() {
-	availableProviders = append(availableProviders, func(getenv func(string) string) Provider {
+	availableProviders = append(availableProviders, func(getenv func(string) string) (Provider, bool) {
 		token := getenv(telegramEnvVarName)
 		if token == "" {
-			return nil
-		} else {
 			log.Println("providers: if you want Telegram enabled, please set a valid value for the environment variables", telegramEnvVarName)
+			return nil, false
 		}
-		return Telegram(token)
+		return Telegram(token), true
 	})
 }
 

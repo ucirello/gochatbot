@@ -22,3 +22,5 @@ import:
   version: 6960b6fd7985a30c07edbf810480fe0a2bc1b7dc
 - package: github.com/technoweenie/multipartstreamer
   version: a90a01d73ae432e2611d178c18367fbaa13e0154
+- package: github.com/thoj/go-ircevent
+  version: db3338ebd4546123dfcde5dfad6057d1d646a42d
