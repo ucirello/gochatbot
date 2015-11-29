@@ -1,6 +1,7 @@
 package bot // import "cirello.io/gochatbot/bot"
 
 import (
+	"log"
 	"sync"
 
 	"cirello.io/gochatbot/brain"
@@ -31,6 +32,7 @@ func New(name string, opts ...Option) *Self {
 		providerIn:  make(chan messages.Message),
 		providerOut: make(chan messages.Message),
 	}
+	log.Println("bot: applying options")
 	for _, opt := range opts {
 		opt(s)
 	}
@@ -42,6 +44,7 @@ func New(name string, opts ...Option) *Self {
 // in its own goroutine.
 func (s *Self) Process() {
 	processOnce.Do(func() {
+		log.Println("bot: starting main loop")
 		for in := range s.providerIn {
 			go func(self Self, msg messages.Message) {
 				for _, rule := range s.rules {

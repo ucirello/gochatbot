@@ -1,6 +1,8 @@
 package bot
 
 import (
+	"log"
+
 	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/messages"
 	"cirello.io/gochatbot/providers"
@@ -10,6 +12,7 @@ import (
 // into the robot.
 func MessageProvider(provider providers.Provider) Option {
 	return func(s *Self) {
+		log.Printf("bot: changing message provider %T\n", provider)
 		s.providerIn = provider.IncomingChannel()
 		s.providerOut = provider.OutgoingChannel()
 	}
@@ -25,12 +28,14 @@ type RuleParser interface {
 // RegisterRuleset is the self-referencing option that plugs Rules into the robot.
 func RegisterRuleset(rule RuleParser) Option {
 	return func(s *Self) {
+		log.Printf("bot: registering ruleset %T\n", rule)
 		s.rules = append(s.rules, rule)
 	}
 }
 
 func RegisterMemorizer(memo brain.Memorizer) Option {
 	return func(s *Self) {
+		log.Printf("bot: registering memorizer %T\n", memo)
 		s.brain = memo
 	}
 }

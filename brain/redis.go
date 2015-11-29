@@ -3,6 +3,7 @@
 package brain // import "cirello.io/gochatbot/brain"
 
 import (
+	"log"
 	"strconv"
 
 	redis "gopkg.in/redis.v3"
@@ -10,7 +11,12 @@ import (
 
 func init() {
 	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
-		return RedisFromEnv(getenv)
+		log.Println("brain: trying registering redis")
+		memo, ok := RedisFromEnv(getenv)
+		if ok {
+			log.Println("brain: registered redis")
+		}
+		return memo, ok
 	})
 }
 

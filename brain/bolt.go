@@ -4,13 +4,19 @@ package brain // import "cirello.io/gochatbot/brain"
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/boltdb/bolt"
 )
 
 func init() {
 	AvailableDrivers = append(AvailableDrivers, func(getenv func(string) string) (Memorizer, bool) {
-		return BoltFromEnv(getenv)
+		log.Println("brain: trying registering bolt")
+		memo, ok := BoltFromEnv(getenv)
+		if ok {
+			log.Println("brain: registered bolt")
+		}
+		return memo, ok
 	})
 }
 

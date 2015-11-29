@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -70,6 +71,7 @@ func (p *providerSlack) Error() error {
 }
 
 func (p *providerSlack) handshake() {
+	log.Println("slack: connecting to HTTP API handshake interface")
 	resp, err := http.Get(fmt.Sprint(urlSlackAPI, "rtm.start?no_unreads&simple_latest&token=", p.token))
 	if err != nil {
 		p.err = err
@@ -104,6 +106,11 @@ func (p *providerSlack) handshake() {
 }
 
 func (p *providerSlack) dial() {
+	log.Println("slack: dialing to HTTP WS rtm interface")
+	if p.wsURL == "" {
+		p.err = fmt.Errorf("could not connnect to Slack HTTP WS rtm. please, check your connection and your token (%s)", slackEnvVarName)
+		return
+	}
 	ws, err := websocket.Dial(p.wsURL, "", urlSlackAPI)
 	if err != nil {
 		p.err = err
@@ -114,6 +121,7 @@ func (p *providerSlack) dial() {
 
 func (p *providerSlack) loop() {
 	go func() {
+		log.Println("slack: started message intake loop")
 		for {
 			var data struct {
 				Type    string `json:"type"`
@@ -139,6 +147,7 @@ func (p *providerSlack) loop() {
 	}()
 
 	go func() {
+		log.Println("slack: started message dispatch loop")
 		for msg := range p.out {
 			// TODO(ccf): find a way in that text/template does not escape username DMs.
 			var finalMsg bytes.Buffer
@@ -169,11 +178,16 @@ func (p *providerSlack) loop() {
 
 func (p *providerSlack) reconnect() {
 	for {
+		time.Sleep(1 * time.Second)
+		if p.wsConn == nil {
+			log.Println("slack: cannot reconnect")
+			break
+		}
 		_, err := p.wsConn.Write([]byte(`{"type":"hello"}`))
 		if err != nil {
+			log.Println("slack: reconnecting")
 			p.handshake()
 			p.dial()
 		}
-		time.Sleep(1 * time.Second)
 	}
 }

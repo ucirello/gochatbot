@@ -20,9 +20,11 @@ func main() {
 		bot.RegisterMemorizer(memory),
 	)
 	if err := provider.Error(); err != nil {
+		log.SetOutput(os.Stderr)
 		log.Fatalln("error in message provider:", err)
 	}
 	if err := memory.Error(); err != nil {
+		log.SetOutput(os.Stderr)
 		log.Fatalln("error in brain memory:", err)
 	}
 	robot.Process()
