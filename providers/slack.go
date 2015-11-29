@@ -26,6 +26,8 @@ func init() {
 		token := getenv(slackEnvVarName)
 		if token == "" {
 			return nil
+		} else {
+			log.Println("providers: if you want Slack enabled, please set a valid value for the environment variables", slackEnvVarName)
 		}
 		return Slack(token)
 	})

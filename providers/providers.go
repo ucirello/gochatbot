@@ -1,6 +1,10 @@
 package providers // import "cirello.io/gochatbot/providers"
 
-import "cirello.io/gochatbot/messages"
+import (
+	"log"
+
+	"cirello.io/gochatbot/messages"
+)
 
 // Provider explains the interface for pluggable message providers (CLI, Slack,
 // IRC etc.)
@@ -21,5 +25,7 @@ func Detect(getenv func(string) string) Provider {
 			return ret
 		}
 	}
+	log.Println("providers: no message provider found.")
+	log.Println("providers: falling back to CLI.")
 	return CLI()
 }
