@@ -27,13 +27,14 @@ func (r regexRuleset) Name() string {
 }
 
 func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	regexRules = append(regexRules,
+	localRegexRules := regexRules
+	localRegexRules = append(localRegexRules,
 		regexRule{
 			`{{ .RobotName }} help`, `this help screen`,
 			func(self bot.Self, msg string, _ []string) []string {
 				botName := self.Name()
 				ret := fmt.Sprintln("available commands:")
-				for _, rule := range regexRules {
+				for _, rule := range localRegexRules {
 					var finalRegex bytes.Buffer
 					r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
 
@@ -44,7 +45,7 @@ func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []message
 		},
 	)
 
-	for _, rule := range regexRules {
+	for _, rule := range localRegexRules {
 		botName := self.Name()
 		if in.Direct {
 			botName = ""
