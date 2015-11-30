@@ -25,7 +25,7 @@ func init() {
 	availableProviders = append(availableProviders, func(getenv func(string) string) (Provider, bool) {
 		token := getenv(slackEnvVarName)
 		if token == "" {
-			log.Println("providers: if you want Slack enabled, please set a valid value for the environment variables", slackEnvVarName)
+			log.Println("providers: skipping Slack. if you want Slack enabled, please set a valid value for the environment variables", slackEnvVarName)
 			return nil, false
 		}
 		return Slack(token), true

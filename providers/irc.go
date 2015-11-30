@@ -35,7 +35,7 @@ func init() {
 		tls := getenv(IrcTLSEnvVarName)
 
 		if server == "" || channels == "" || user == "" || nick == "" {
-			log.Println("providers: if you want IRC enabled, please set a valid value for the environment variables", IrcUserEnvVarName, IrcNickEnvVarName, IrcServerEnvVarName, IrcChannelsEnvVarName)
+			log.Println("providers: skipping IRC. If you want IRC enabled, please set a valid value for the environment variables", IrcUserEnvVarName, IrcNickEnvVarName, IrcServerEnvVarName, IrcChannelsEnvVarName)
 			return nil, false
 		}
 		return IRC(user, nick, server, channels, password, tls), true

@@ -19,7 +19,7 @@ func init() {
 	availableProviders = append(availableProviders, func(getenv func(string) string) (Provider, bool) {
 		token := getenv(telegramEnvVarName)
 		if token == "" {
-			log.Println("providers: if you want Telegram enabled, please set a valid value for the environment variables", telegramEnvVarName)
+			log.Println("providers: skipping Telegram. if you want Telegram enabled, please set a valid value for the environment variables", telegramEnvVarName)
 			return nil, false
 		}
 		return Telegram(token), true
