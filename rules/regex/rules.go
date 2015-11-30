@@ -3,12 +3,24 @@ package regex
 import (
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
 
 	"cirello.io/gochatbot/bot"
 )
+
+var httpGet = httpGetOverHTTP
+
+func httpGetOverHTTP(u string) (io.ReadCloser, error) {
+	resp, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+
+}
 
 var regexRules = []regexRule{
 	{
@@ -30,11 +42,11 @@ var regexRules = []regexRule{
 				return []string{}
 			}
 
-			resp, err := http.Get(fmt.Sprintf("http://api.godoc.org/search?q=%s", url.QueryEscape(matches[1])))
+			respBody, err := httpGet(fmt.Sprintf("http://api.godoc.org/search?q=%s", url.QueryEscape(matches[1])))
 			if err != nil {
 				return []string{err.Error()}
 			}
-			defer resp.Body.Close()
+			defer respBody.Close()
 
 			var data struct {
 				Results []struct {
@@ -43,7 +55,7 @@ var regexRules = []regexRule{
 				} `json:"results"`
 			}
 
-			if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+			if err := json.NewDecoder(respBody).Decode(&data); err != nil {
 				return []string{err.Error()}
 			}
 
