@@ -12,8 +12,8 @@ import (
 // identity (Name).
 type Self struct {
 	name        string
-	providerOut chan messages.Message
 	providerIn  chan messages.Message
+	providerOut chan messages.Message
 	rules       []RuleParser
 
 	brain brain.Memorizer

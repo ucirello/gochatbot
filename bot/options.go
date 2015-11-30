@@ -25,10 +25,19 @@ type RuleParser interface {
 	ParseMessage(Self, messages.Message) []messages.Message
 }
 
+type MessageDispatcher interface {
+	SetOutgoingChannel(outCh chan messages.Message)
+}
+
 // RegisterRuleset is the self-referencing option that plugs Rules into the robot.
 func RegisterRuleset(rule RuleParser) Option {
 	return func(s *Self) {
-		log.Printf("bot: registering ruleset %T\n", rule)
+		log.Printf("bot: registering ruleset %T", rule)
+		switch rule.(type) {
+		case MessageDispatcher:
+			log.Printf("bot: registering bot into rule %T", rule)
+			rule.(MessageDispatcher).SetOutgoingChannel(s.providerOut)
+		}
 		s.rules = append(s.rules, rule)
 	}
 }
