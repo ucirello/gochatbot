@@ -1,3 +1,5 @@
+// +build all irc
+
 package providers
 
 import (

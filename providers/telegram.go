@@ -1,3 +1,5 @@
+// +build all telegram
+
 package providers
 
 import (

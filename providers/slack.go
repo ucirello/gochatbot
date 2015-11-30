@@ -1,3 +1,5 @@
+// +build all slack
+
 package providers
 
 import (
