@@ -24,3 +24,5 @@ import:
   version: a90a01d73ae432e2611d178c18367fbaa13e0154
 - package: github.com/thoj/go-ircevent
   version: db3338ebd4546123dfcde5dfad6057d1d646a42d
+- package: github.com/gorhill/cronexpr
+  version: a557574d6c024ed6e36acc8b610f5f211c91568a

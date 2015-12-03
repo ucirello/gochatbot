@@ -9,7 +9,7 @@ type cronRule struct {
 
 var cronRules = map[string]cronRule{
 	"message of the day": {
-		"10:00",
+		"0 10 * * *",
 		func() []messages.Message {
 			return []messages.Message{
 				{Message: "Good morning!"},

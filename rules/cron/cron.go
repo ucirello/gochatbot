@@ -9,6 +9,7 @@ import (
 
 	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/messages"
+	"github.com/gorhill/cronexpr"
 )
 
 type cronRuleset struct {
@@ -193,21 +194,20 @@ func (r *cronRuleset) start() {
 			c := make(chan struct{})
 			r.stopChan = append(r.stopChan, c)
 			go func(r cronRule, stop chan struct{}, outCh chan messages.Message, cronRoom string) {
-				lastExecuted := ""
+				nextTime := cronexpr.MustParse(r.When).Next(time.Now())
 				for {
 					select {
 					case <-c:
 						return
 					default:
-						now := time.Now().Format("15:04")
-						if now == r.When && lastExecuted != now {
-							lastExecuted = now
+						if nextTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
 							msgs := r.Action()
 							for _, msg := range msgs {
 								msg.Room = cronRoom
 								outCh <- msg
 							}
 						}
+						nextTime = cronexpr.MustParse(r.When).Next(time.Now())
 						time.Sleep(1 * time.Second)
 					}
 				}
