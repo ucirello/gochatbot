@@ -193,25 +193,27 @@ func (r *cronRuleset) start() {
 		for _, rule := range rules {
 			c := make(chan struct{})
 			r.stopChan = append(r.stopChan, c)
-			go func(r cronRule, stop chan struct{}, outCh chan messages.Message, cronRoom string) {
-				nextTime := cronexpr.MustParse(r.When).Next(time.Now())
-				for {
-					select {
-					case <-c:
-						return
-					default:
-						if nextTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
-							msgs := r.Action()
-							for _, msg := range msgs {
-								msg.Room = cronRoom
-								outCh <- msg
-							}
-						}
-						nextTime = cronexpr.MustParse(r.When).Next(time.Now())
-						time.Sleep(1 * time.Second)
-					}
+			go processCronRule(cronRules[rule], c, r.outCh, room)
+		}
+	}
+}
+
+func processCronRule(rule cronRule, stop chan struct{}, outCh chan messages.Message, cronRoom string) {
+	nextTime := cronexpr.MustParse(rule.When).Next(time.Now())
+	for {
+		select {
+		case <-stop:
+			return
+		default:
+			if nextTime.Format("2006-01-02 15:04") == time.Now().Format("2006-01-02 15:04") {
+				msgs := rule.Action()
+				for _, msg := range msgs {
+					msg.Room = cronRoom
+					outCh <- msg
 				}
-			}(cronRules[rule], c, r.outCh, room)
+			}
+			nextTime = cronexpr.MustParse(rule.When).Next(time.Now())
+			time.Sleep(2 * time.Second)
 		}
 	}
 }
