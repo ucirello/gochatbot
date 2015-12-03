@@ -7,6 +7,7 @@ import (
 	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/providers"
+	"cirello.io/gochatbot/rules/cron"
 	"cirello.io/gochatbot/rules/regex"
 )
 
@@ -17,6 +18,7 @@ func main() {
 		"gochatbot",
 		bot.MessageProvider(provider),
 		bot.RegisterRuleset(regex.New()),
+		bot.RegisterRuleset(cron.New()),
 		bot.RegisterMemorizer(memory),
 	)
 	if err := provider.Error(); err != nil {

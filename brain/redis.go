@@ -3,6 +3,7 @@
 package brain // import "cirello.io/gochatbot/brain"
 
 import (
+	"encoding/json"
 	"log"
 	"strconv"
 
@@ -87,8 +88,15 @@ func (r *RedisMemory) calculateKey(ruleName, key string) string {
 func (r *RedisMemory) Save(ruleName, key string, value interface{}) {
 	r.brain.Save(ruleName, key, value)
 
-	err := r.db.Set(r.calculateKey(ruleName, key), value, 0).Err()
+	output, err := json.Marshal(value)
 	if err != nil {
+		log.Println("redis err (set):", err)
+		r.err = err
+		return
+	}
+
+	if err := r.db.Set(r.calculateKey(ruleName, key), output, 0).Err(); err != nil {
+		log.Println("redis err (set):", err)
 		r.err = err
 		return
 	}
@@ -103,9 +111,17 @@ func (r *RedisMemory) Read(ruleName, key string) interface{} {
 
 	found, err := r.db.Get(r.calculateKey(ruleName, key)).Result()
 	if err != nil {
+		log.Println("redis err (get):", err)
 		r.err = err
 		return nil
 	}
 
-	return found
+	var ret interface{}
+	if err := json.Unmarshal([]byte(found), &ret); err != nil {
+		log.Println("redis err (get):", err)
+		r.err = err
+		return nil
+	}
+
+	return ret
 }

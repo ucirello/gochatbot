@@ -59,13 +59,13 @@ func (s *Self) Process() {
 }
 
 // MemoryRead reads an arbitraty value from the robot's Brain.
-func (s *Self) MemoryRead(ruleName, key string) interface{} {
-	return s.brain.Read(ruleName, key)
+func (s *Self) MemoryRead(namespace, key string) interface{} {
+	return s.brain.Read(namespace, key)
 }
 
 // MemorySave reads an arbitraty value from the robot's Brain.
-func (s *Self) MemorySave(ruleName, key string, value interface{}) {
-	s.brain.Save(ruleName, key, value)
+func (s *Self) MemorySave(namespace, key string, value interface{}) {
+	s.brain.Save(namespace, key, value)
 }
 
 // Name returns robot's name - identity used for answering direct messages.
