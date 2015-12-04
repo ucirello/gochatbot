@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
 	"cirello.io/gochatbot/bot"
@@ -44,6 +45,20 @@ var regexRules = []regex.Rule{
 			const qrUrl = "https://chart.googleapis.com/chart?chs=178x178&cht=qr&chl=%s"
 			return []string{
 				fmt.Sprintf(qrUrl, url.QueryEscape(matches[1])),
+			}
+		},
+	},
+	{
+		`{{ .RobotName }} explainshell (.*)`, `links to explainshell.com on given command`,
+		func(bot bot.Self, msg string, matches []string) []string {
+			const explainShellUrl = "http://explainshell.com/explain?cmd=%s"
+			return []string{
+				strings.Replace(
+					fmt.Sprintf(explainShellUrl, url.QueryEscape(matches[1])),
+					"%20",
+					"+",
+					-1,
+				),
 			}
 		},
 	},
