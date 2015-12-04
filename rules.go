@@ -6,6 +6,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -45,6 +46,21 @@ var regexRules = []regex.Rule{
 			const qrUrl = "https://chart.googleapis.com/chart?chs=178x178&cht=qr&chl=%s"
 			return []string{
 				fmt.Sprintf(qrUrl, url.QueryEscape(matches[1])),
+			}
+		},
+	},
+	{
+		`{{ .RobotName }} http status (.*)`, `return the description of the given HTTP status`,
+		func(bot bot.Self, msg string, matches []string) []string {
+			httpCode, err := strconv.Atoi(matches[1])
+			if err != nil {
+				return []string{fmt.Sprintln("I could not convert", matches[1], "into HTTP code.")}
+			}
+			return []string{
+				fmt.Sprintln(
+					"{{ .User }},", matches[1], "is",
+					http.StatusText(httpCode),
+				),
 			}
 		},
 	},
