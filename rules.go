@@ -39,6 +39,15 @@ var regexRules = []regex.Rule{
 		},
 	},
 	{
+		`{{ .RobotName }} qr code (.*)`, `turn a URL into a QR Code`,
+		func(bot bot.Self, msg string, matches []string) []string {
+			const qrUrl = "https://chart.googleapis.com/chart?chs=178x178&cht=qr&chl=%s"
+			return []string{
+				fmt.Sprintf(qrUrl, url.QueryEscape(matches[1])),
+			}
+		},
+	},
+	{
 		`{{ .RobotName }} godoc (.*)`, `search godoc.org and return the first result`,
 		func(bot bot.Self, msg string, matches []string) []string {
 			if len(matches) < 2 {
