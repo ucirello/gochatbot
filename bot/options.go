@@ -22,6 +22,7 @@ func MessageProvider(provider providers.Provider) Option {
 type RuleParser interface {
 	Name() string
 	Boot(*Self)
+	HelpMessage(Self) string
 	ParseMessage(Self, messages.Message) []messages.Message
 }
 

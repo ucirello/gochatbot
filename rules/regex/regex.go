@@ -6,6 +6,7 @@ import (
 	"regexp"
 	"strings"
 	"text/template"
+	"unicode"
 
 	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/messages"
@@ -31,26 +32,20 @@ func (r regexRuleset) Name() string {
 func (r regexRuleset) Boot(_ *bot.Self) {
 }
 
+func (r regexRuleset) HelpMessage(self bot.Self) string {
+	botName := self.Name()
+	var helpMsg string
+	for _, rule := range r.rules {
+		var finalRegex bytes.Buffer
+		r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
+
+		helpMsg = fmt.Sprintln(helpMsg, finalRegex.String(), "-", rule.HelpMessage)
+	}
+	return strings.TrimLeftFunc(helpMsg, unicode.IsSpace)
+}
+
 func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	localRegexRules := r.rules
-	localRegexRules = append(localRegexRules,
-		Rule{
-			`{{ .RobotName }} help`, `this help screen`,
-			func(self bot.Self, msg string, _ []string) []string {
-				botName := self.Name()
-				ret := fmt.Sprintln("available commands:")
-				for _, rule := range localRegexRules {
-					var finalRegex bytes.Buffer
-					r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
-
-					ret = ret + fmt.Sprintln(finalRegex.String(), "-", rule.HelpMessage)
-				}
-				return []string{ret}
-			},
-		},
-	)
-
-	for _, rule := range localRegexRules {
+	for _, rule := range r.rules {
 		botName := self.Name()
 		if in.Direct {
 			botName = ""

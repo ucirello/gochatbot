@@ -53,48 +53,18 @@ func (r *cronRuleset) loadMemory(self *bot.Self) {
 	}
 }
 
-func (r *cronRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	if in.Message == "cron help" {
-		return []messages.Message{
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron attach <job name>- attach one cron job to a room",
-			},
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron dettach <job name> - dettach one cron job from a room",
-			},
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron list - list all available crons",
-			},
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron start - start all crons",
-			},
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron stop - stop all crons",
-			},
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    "cron help - this message",
-			},
-		}
-	}
+func (r cronRuleset) HelpMessage(self bot.Self) string {
+	helpMsg := fmt.Sprintln("cron attach <job name>- attach one cron job to a room")
+	helpMsg = fmt.Sprintln(helpMsg, "cron dettach <job name> - dettach one cron job from a room")
+	helpMsg = fmt.Sprintln(helpMsg, "cron list - list all available crons")
+	helpMsg = fmt.Sprintln(helpMsg, "cron start - start all crons")
+	helpMsg = fmt.Sprintln(helpMsg, "cron stop - stop all crons")
+	helpMsg = fmt.Sprintln(helpMsg, "cron help - this message")
 
+	return helpMsg
+}
+
+func (r *cronRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
 	if strings.HasPrefix(in.Message, "cron attach") {
 		ruleName := strings.TrimSpace(strings.TrimPrefix(in.Message, "cron attach"))
 		ret := []messages.Message{

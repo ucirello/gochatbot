@@ -1,7 +1,9 @@
 package bot // import "cirello.io/gochatbot/bot"
 
 import (
+	"fmt"
 	"log"
+	"strings"
 	"sync"
 
 	"cirello.io/gochatbot/brain"
@@ -46,6 +48,21 @@ func (s *Self) Process() {
 	processOnce.Do(func() {
 		log.Println("bot: starting main loop")
 		for in := range s.providerIn {
+			if strings.HasPrefix(in.Message, s.Name()+" help") {
+				go func(self Self, msg messages.Message) {
+					helpMsg := fmt.Sprintln("available commands:")
+					for _, rule := range s.rules {
+						helpMsg = fmt.Sprintln(helpMsg, rule.HelpMessage(self))
+					}
+					s.providerOut <- messages.Message{
+						Room:       msg.Room,
+						ToUserID:   msg.FromUserID,
+						ToUserName: msg.FromUserName,
+						Message:    helpMsg,
+					}
+				}(*s, in)
+				continue
+			}
 			go func(self Self, msg messages.Message) {
 				for _, rule := range s.rules {
 					responses := rule.ParseMessage(self, msg)
