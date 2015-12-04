@@ -25,10 +25,10 @@ var processOnce sync.Once // protects Process
 type Option func(*Self)
 
 // New creates a new gobot.
-func New(name string, opts ...Option) *Self {
+func New(name string, memo brain.Memorizer, opts ...Option) *Self {
 	s := &Self{
 		name:        name,
-		brain:       brain.Brain(),
+		brain:       memo,
 		providerIn:  make(chan messages.Message),
 		providerOut: make(chan messages.Message),
 	}

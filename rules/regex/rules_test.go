@@ -7,11 +7,12 @@ import (
 	"testing"
 
 	"cirello.io/gochatbot/bot"
+	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/messages"
 )
 
 func TestRegex(t *testing.T) {
-	mockBot := bot.New("gochatbot")
+	mockBot := bot.New("gochatbot", brain.Brain())
 	reSet := New()
 	tests := []struct {
 		name    string

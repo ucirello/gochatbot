@@ -3,7 +3,6 @@ package bot
 import (
 	"log"
 
-	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/messages"
 	"cirello.io/gochatbot/providers"
 )
@@ -43,13 +42,5 @@ func RegisterRuleset(rule RuleParser) Option {
 		}
 		rule.Boot(s)
 		s.rules = append(s.rules, rule)
-	}
-}
-
-// RegisterMemorizer plugs a durable memory to the robot's brain.
-func RegisterMemorizer(memo brain.Memorizer) Option {
-	return func(s *Self) {
-		log.Printf("bot: registering memorizer %T\n", memo)
-		s.brain = memo
 	}
 }

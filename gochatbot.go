@@ -16,8 +16,8 @@ func main() {
 	memory := brain.Detect(os.Getenv)
 	robot := bot.New(
 		"gochatbot",
+		memory,
 		bot.MessageProvider(provider),
-		bot.RegisterMemorizer(memory),
 		bot.RegisterRuleset(regex.New()),
 		bot.RegisterRuleset(cron.New()),
 	)
