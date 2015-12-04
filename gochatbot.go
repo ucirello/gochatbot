@@ -32,7 +32,7 @@ func main() {
 		name,
 		memory,
 		bot.MessageProvider(provider),
-		bot.RegisterRuleset(regex.New()),
-		bot.RegisterRuleset(cron.New()),
+		bot.RegisterRuleset(regex.New(regexRules)),
+		bot.RegisterRuleset(cron.New(cronRules)),
 	).Process()
 }

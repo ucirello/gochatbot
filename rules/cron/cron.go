@@ -12,9 +12,15 @@ import (
 	"github.com/gorhill/cronexpr"
 )
 
+type Rule struct {
+	When   string
+	Action func() []messages.Message
+}
+
 type cronRuleset struct {
-	outCh    chan messages.Message
-	stopChan []chan struct{}
+	outCh     chan messages.Message
+	stopChan  []chan struct{}
+	cronRules map[string]Rule
 
 	loadOnce sync.Once
 
@@ -117,7 +123,7 @@ func (r *cronRuleset) ParseMessage(self bot.Self, in messages.Message) []message
 
 	if in.Message == "cron list" {
 		var ret []messages.Message
-		for ruleName, rule := range cronRules {
+		for ruleName, rule := range r.cronRules {
 			ret = append(ret, messages.Message{
 				Room:       in.Room,
 				ToUserID:   in.FromUserID,
@@ -159,7 +165,7 @@ func (r *cronRuleset) attach(self bot.Self, ruleName, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	if _, ok := cronRules[ruleName]; !ok {
+	if _, ok := r.cronRules[ruleName]; !ok {
 		return ruleName + " not found"
 	}
 
@@ -196,12 +202,12 @@ func (r *cronRuleset) start() {
 		for _, rule := range rules {
 			c := make(chan struct{})
 			r.stopChan = append(r.stopChan, c)
-			go processCronRule(cronRules[rule], c, r.outCh, room)
+			go processCronRule(r.cronRules[rule], c, r.outCh, room)
 		}
 	}
 }
 
-func processCronRule(rule cronRule, stop chan struct{}, outCh chan messages.Message, cronRoom string) {
+func processCronRule(rule Rule, stop chan struct{}, outCh chan messages.Message, cronRoom string) {
 	nextTime := cronexpr.MustParse(rule.When).Next(time.Now())
 	for {
 		select {
@@ -229,9 +235,10 @@ func (r *cronRuleset) stop() {
 }
 
 // New returns a cron rule set
-func New() *cronRuleset {
+func New(rules map[string]Rule) *cronRuleset {
 	r := &cronRuleset{
 		attachedCrons: make(map[string][]string),
+		cronRules:     rules,
 	}
 	return r
 }

@@ -1,4 +1,4 @@
-package regex
+package main
 
 import (
 	"encoding/json"
@@ -9,20 +9,23 @@ import (
 	"time"
 
 	"cirello.io/gochatbot/bot"
+	"cirello.io/gochatbot/messages"
+	"cirello.io/gochatbot/rules/cron"
+	"cirello.io/gochatbot/rules/regex"
 )
 
-var httpGet = httpGetOverHTTP
-
-func httpGetOverHTTP(u string) (io.ReadCloser, error) {
-	resp, err := http.Get(u)
-	if err != nil {
-		return nil, err
-	}
-	return resp.Body, nil
-
+var cronRules = map[string]cron.Rule{
+	"message of the day": {
+		"0 10 * * *",
+		func() []messages.Message {
+			return []messages.Message{
+				{Message: "Good morning!"},
+			}
+		},
+	},
 }
 
-var regexRules = []regexRule{
+var regexRules = []regex.Rule{
 	{
 		`{{ .RobotName }} jump`, `tells the robot to jump`,
 		func(bot bot.Self, msg string, matches []string) []string {
@@ -67,4 +70,13 @@ var regexRules = []regexRule{
 
 		},
 	},
+}
+
+func httpGet(u string) (io.ReadCloser, error) {
+	resp, err := http.Get(u)
+	if err != nil {
+		return nil, err
+	}
+	return resp.Body, nil
+
 }

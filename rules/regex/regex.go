@@ -11,7 +11,7 @@ import (
 	"cirello.io/gochatbot/messages"
 )
 
-type regexRule struct {
+type Rule struct {
 	Regex        string
 	HelpMessage  string
 	ParseMessage func(bot.Self, string, []string) []string
@@ -19,6 +19,7 @@ type regexRule struct {
 
 type regexRuleset struct {
 	regexes map[string]*template.Template
+	rules   []Rule
 }
 
 // Name returns this rules name - meant for debugging.
@@ -31,9 +32,9 @@ func (r regexRuleset) Boot(_ *bot.Self) {
 }
 
 func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	localRegexRules := regexRules
+	localRegexRules := r.rules
 	localRegexRules = append(localRegexRules,
-		regexRule{
+		Rule{
 			`{{ .RobotName }} help`, `this help screen`,
 			func(self bot.Self, msg string, _ []string) []string {
 				botName := self.Name()
@@ -89,11 +90,12 @@ func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []message
 }
 
 // New returns a regex rule set
-func New() *regexRuleset {
+func New(rules []Rule) *regexRuleset {
 	r := &regexRuleset{
 		regexes: make(map[string]*template.Template),
+		rules:   rules,
 	}
-	for _, rule := range regexRules {
+	for _, rule := range rules {
 		r.regexes[rule.Regex] = template.Must(template.New(rule.Regex).Parse(rule.Regex))
 	}
 	return r
