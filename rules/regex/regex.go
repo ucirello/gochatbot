@@ -26,6 +26,10 @@ func (r regexRuleset) Name() string {
 	return "Regex Ruleset"
 }
 
+// Boot runs preparatory steps for ruleset execution
+func (r regexRuleset) Boot(_ *bot.Self) {
+}
+
 func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
 	localRegexRules := regexRules
 	localRegexRules = append(localRegexRules,

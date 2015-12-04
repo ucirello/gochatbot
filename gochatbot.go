@@ -17,9 +17,9 @@ func main() {
 	robot := bot.New(
 		"gochatbot",
 		bot.MessageProvider(provider),
+		bot.RegisterMemorizer(memory),
 		bot.RegisterRuleset(regex.New()),
 		bot.RegisterRuleset(cron.New()),
-		bot.RegisterMemorizer(memory),
 	)
 	if err := provider.Error(); err != nil {
 		log.SetOutput(os.Stderr)

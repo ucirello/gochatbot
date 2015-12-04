@@ -22,9 +22,12 @@ func MessageProvider(provider providers.Provider) Option {
 // a valid message parsing rule.
 type RuleParser interface {
 	Name() string
+	Boot(*Self)
 	ParseMessage(Self, messages.Message) []messages.Message
 }
 
+// MessageDispatcher interface describe those ruleset which dispatch messages
+// even no incoming event has taken place.
 type MessageDispatcher interface {
 	SetOutgoingChannel(outCh chan messages.Message)
 }
@@ -38,6 +41,7 @@ func RegisterRuleset(rule RuleParser) Option {
 			log.Printf("bot: registering bot into rule %T", rule)
 			rule.(MessageDispatcher).SetOutgoingChannel(s.providerOut)
 		}
+		rule.Boot(s)
 		s.rules = append(s.rules, rule)
 	}
 }

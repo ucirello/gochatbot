@@ -27,7 +27,12 @@ func (r *cronRuleset) Name() string {
 	return "Cron Ruleset"
 }
 
-func (r *cronRuleset) loadMemory(self bot.Self) {
+// Boot runs preparatory steps for ruleset execution
+func (r *cronRuleset) Boot(self *bot.Self) {
+	r.loadMemory(self)
+}
+
+func (r *cronRuleset) loadMemory(self *bot.Self) {
 	log.Println("cron: reading from memory")
 	v := self.MemoryRead("cron", "attached")
 	if v != nil {
@@ -43,8 +48,6 @@ func (r *cronRuleset) loadMemory(self bot.Self) {
 }
 
 func (r *cronRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	r.loadOnce.Do(func() { r.loadMemory(self) })
-
 	if in.Message == "cron help" {
 		return []messages.Message{
 			{
