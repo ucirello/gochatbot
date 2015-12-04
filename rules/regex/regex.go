@@ -37,14 +37,14 @@ func (r regexRuleset) ParseMessage(self bot.Self, in messages.Message) []message
 			`{{ .RobotName }} help`, `this help screen`,
 			func(self bot.Self, msg string, _ []string) []string {
 				botName := self.Name()
-				ret := []string{fmt.Sprint("available commands:")}
+				ret := fmt.Sprintln("available commands:")
 				for _, rule := range localRegexRules {
 					var finalRegex bytes.Buffer
 					r.regexes[rule.Regex].Execute(&finalRegex, struct{ RobotName string }{botName})
 
-					ret = append(ret, fmt.Sprintln(finalRegex.String(), "-", rule.HelpMessage))
+					ret = ret + fmt.Sprintln(finalRegex.String(), "-", rule.HelpMessage)
 				}
-				return ret
+				return []string{ret}
 			},
 		},
 	)

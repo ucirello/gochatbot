@@ -65,6 +65,7 @@ func IRC(user, nick, server, channels, password, useTLS string) *providerIRC {
 
 	ircConn.UseTLS = false
 	if useTLS != "" {
+		log.Println("irc: activating TLS")
 		serverName, _, err := net.SplitHostPort(server)
 		if err != nil {
 			pi.err = fmt.Errorf("error spliting host port: %v", err)
@@ -108,6 +109,7 @@ func IRC(user, nick, server, channels, password, useTLS string) *providerIRC {
 		return pi
 	}
 	pi.ircConn = ircConn
+	log.Println("irc: starting message loops")
 	go pi.ircConn.Loop()
 	go pi.loop()
 	return pi
@@ -123,7 +125,10 @@ func (p *providerIRC) loop() {
 		var finalMsg bytes.Buffer
 		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{msg.ToUserName})
 
-		p.ircConn.Privmsg(channel, finalMsg.String())
+		msgs := strings.Split(finalMsg.String(), "\n")
+		for _, m := range msgs {
+			p.ircConn.Privmsg(channel, m)
+		}
 	}
 }
 
