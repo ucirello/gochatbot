@@ -28,3 +28,4 @@ gochatbot
 
 vendor/
 gochatbot.db
+gochatbot-container

@@ -4,7 +4,9 @@ all: vendor
 	GO15VENDOREXPERIMENT=1 go build -tags "$(GCBFLAGS)"
 
 docker: vendor
+	GOOS=linux GO15VENDOREXPERIMENT=1 go build -tags "all" -o gochatbot-container
 	docker build -t ccirello/gochatbot .
+	rm -f gochatbot-container
 
 vendor:
 	go get github.com/Masterminds/glide
