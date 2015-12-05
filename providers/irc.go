@@ -111,11 +111,11 @@ func IRC(user, nick, server, channels, password, useTLS string) *providerIRC {
 	pi.ircConn = ircConn
 	log.Println("irc: starting message loops")
 	go pi.ircConn.Loop()
-	go pi.loop()
+	go pi.dispatchLoop()
 	return pi
 }
 
-func (p *providerIRC) loop() {
+func (p *providerIRC) dispatchLoop() {
 	for msg := range p.out {
 		channel := msg.Room
 		if p.ircConn.GetNick() == msg.Room {

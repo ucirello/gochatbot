@@ -55,7 +55,8 @@ func Slack(token string) *providerSlack {
 	slack.handshake()
 	slack.dial()
 	if slack.err == nil {
-		go slack.loop()
+		go slack.intakeLoop()
+		go slack.dispatchLoop()
 	}
 	go slack.reconnect()
 	return slack
@@ -122,61 +123,59 @@ func (p *providerSlack) dial() {
 	p.wsConn = ws
 }
 
-func (p *providerSlack) loop() {
-	go func() {
-		log.Println("slack: started message intake loop")
-		for {
-			var data struct {
-				Type    string `json:"type"`
-				Channel string `json:"channel"`
-				UserID  string `json:"user"`
-				Text    string `json:"text"`
-			}
-			if err := json.NewDecoder(p.wsConn).Decode(&data); err != nil {
-				continue
-			}
-			if data.Type != "message" {
-				continue
-			}
-
-			msg := messages.Message{
-				Room:       data.Channel,
-				FromUserID: data.UserID,
-				Message:    data.Text,
-				Direct:     strings.HasPrefix(data.Channel, "D"),
-			}
-			p.in <- msg
+func (p *providerSlack) intakeLoop() {
+	log.Println("slack: started message intake loop")
+	for {
+		var data struct {
+			Type    string `json:"type"`
+			Channel string `json:"channel"`
+			UserID  string `json:"user"`
+			Text    string `json:"text"`
 		}
-	}()
-
-	go func() {
-		log.Println("slack: started message dispatch loop")
-		for msg := range p.out {
-			// TODO(ccf): find a way in that text/template does not escape username DMs.
-			var finalMsg bytes.Buffer
-			template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
-
-			data := struct {
-				Type    string `json:"type"`
-				User    string `json:"user"`
-				Channel string `json:"channel"`
-				Text    string `json:"text"`
-			}{"message", p.selfID, msg.Room, html.UnescapeString(finalMsg.String())}
-
-			// TODO(ccf): look for an idiomatic way of doing limited writers
-			b, err := json.Marshal(data)
-			if err != nil {
-				continue
-			}
-
-			wsMsg := string(b)
-			if len(wsMsg) > 16*1024 {
-				continue
-			}
-			fmt.Fprint(p.wsConn, wsMsg)
-			time.Sleep(1 * time.Second) // https://api.slack.com/docs/rate-limits
+		if err := json.NewDecoder(p.wsConn).Decode(&data); err != nil {
+			continue
 		}
-	}()
+		if data.Type != "message" {
+			continue
+		}
+
+		msg := messages.Message{
+			Room:       data.Channel,
+			FromUserID: data.UserID,
+			Message:    data.Text,
+			Direct:     strings.HasPrefix(data.Channel, "D"),
+		}
+		p.in <- msg
+	}
+}
+
+func (p *providerSlack) dispatchLoop() {
+	log.Println("slack: started message dispatch loop")
+	for msg := range p.out {
+		// TODO(ccf): find a way in that text/template does not escape username DMs.
+		var finalMsg bytes.Buffer
+		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
+
+		data := struct {
+			Type    string `json:"type"`
+			User    string `json:"user"`
+			Channel string `json:"channel"`
+			Text    string `json:"text"`
+		}{"message", p.selfID, msg.Room, html.UnescapeString(finalMsg.String())}
+
+		// TODO(ccf): look for an idiomatic way of doing limited writers
+		b, err := json.Marshal(data)
+		if err != nil {
+			continue
+		}
+
+		wsMsg := string(b)
+		if len(wsMsg) > 16*1024 {
+			continue
+		}
+		fmt.Fprint(p.wsConn, wsMsg)
+		time.Sleep(1 * time.Second) // https://api.slack.com/docs/rate-limits
+	}
 }
 
 func (p *providerSlack) reconnect() {

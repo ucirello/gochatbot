@@ -54,7 +54,8 @@ func Telegram(token string) *providerTelegram {
 	log.Println("telegram: logged as", tg.Self.UserName)
 	telegram.tg = tg
 
-	go telegram.loop()
+	go telegram.intakeLoop()
+	go telegram.dispatchLoop()
 	return telegram
 }
 
@@ -70,7 +71,7 @@ func (p *providerTelegram) Error() error {
 	return p.err
 }
 
-func (p *providerTelegram) loop() {
+func (p *providerTelegram) intakeLoop() {
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
 	updates, err := p.tg.GetUpdatesChan(u)
@@ -101,18 +102,18 @@ func (p *providerTelegram) loop() {
 			}
 		}
 	}(updates)
+}
 
-	go func() {
-		log.Println("telegram: started message dispatch loop")
-		for msg := range p.out {
-			id, err := strconv.Atoi(msg.ToUserID)
-			if err != nil {
-				continue
-			}
-			var finalMsg bytes.Buffer
-			template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"@" + msg.ToUserName})
-			p.tg.Send(tgbotapi.NewMessage(id, finalMsg.String()))
-			time.Sleep(1 * time.Second)
+func (p *providerTelegram) dispatchLoop() {
+	log.Println("telegram: started message dispatch loop")
+	for msg := range p.out {
+		id, err := strconv.Atoi(msg.ToUserID)
+		if err != nil {
+			continue
 		}
-	}()
+		var finalMsg bytes.Buffer
+		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"@" + msg.ToUserName})
+		p.tg.Send(tgbotapi.NewMessage(id, finalMsg.String()))
+		time.Sleep(1 * time.Second)
+	}
 }
