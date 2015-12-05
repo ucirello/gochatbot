@@ -41,11 +41,12 @@ func (r *cronRuleset) Boot(self *bot.Self) {
 func (r *cronRuleset) loadMemory(self *bot.Self) {
 	log.Println("cron: reading from memory")
 	v := self.MemoryRead("cron", "attached")
-	if v != nil {
-		for room, irules := range v.(map[string]interface{}) {
-			rules := irules.([]interface{})
-			for _, rule := range rules {
-				r.attachedCrons[room] = append(r.attachedCrons[room], fmt.Sprint(rule))
+	if vs, ok := v.(map[string]interface{}); ok {
+		for room, irules := range vs {
+			if rules, ok := irules.([]interface{}); ok {
+				for _, rule := range rules {
+					r.attachedCrons[room] = append(r.attachedCrons[room], fmt.Sprint(rule))
+				}
 			}
 		}
 		log.Println("cron: memory read")
@@ -139,6 +140,11 @@ func (r *cronRuleset) attach(self bot.Self, ruleName, room string) string {
 		return ruleName + " not found"
 	}
 
+	for _, rn := range r.attachedCrons[room] {
+		if rn == ruleName {
+			return ruleName + " already attached to this room"
+		}
+	}
 	r.attachedCrons[room] = append(r.attachedCrons[room], ruleName)
 	self.MemorySave("cron", "attached", r.attachedCrons)
 	return ruleName + " attached to this room"
