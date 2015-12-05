@@ -29,3 +29,6 @@ gochatbot
 vendor/
 gochatbot.db
 gochatbot-container
+gochatbot-darwin
+gochatbot-linux
+gochatbot-windows
