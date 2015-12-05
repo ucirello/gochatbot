@@ -149,7 +149,7 @@ structure that comprises all cron rules.
 Why cron rule? Because it uses crontab format to periodically execute tasks,
 that may, or may not yield messages onto a chat room.
 
-All croon rules have the following structure:
+All cron rules have the following structure:
 ```Go
 "job name": {
 	"crontab format",
