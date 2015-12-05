@@ -174,6 +174,7 @@ func (r *cronRuleset) start() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
+	r.stop()
 	for room, rules := range r.attachedCrons {
 		for _, rule := range rules {
 			c := make(chan struct{})
