@@ -118,5 +118,4 @@ func httpGet(u string) (io.ReadCloser, error) {
 		return nil, err
 	}
 	return resp.Body, nil
-
 }
