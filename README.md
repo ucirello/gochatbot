@@ -127,7 +127,7 @@ var regexRules = []regex.Rule{
 		func(bot bot.Self, msg string, args []string) []string {
 			var ret []string
 
-			ret = append(ret, "{{ .User }}, How high?") // In the messages, the text/template variable "{{ .User }}" is replaced with username.
+			ret = append(ret, "{{ .User }}, How high?") // In the outgoing messages, the text/template variable "{{ .User }}" is replaced with username.
 
 			lastJumpTS := bot.MemoryRead("jump", "lastJump") // Reads from the bot's brain the last time this command was executed.
 			ret = append(ret, fmt.Sprint("{{ .User }} (last time I jumped:", lastJumpTS, ")")) // Append this information to the outgoing messages slice.
