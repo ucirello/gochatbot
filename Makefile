@@ -14,3 +14,9 @@ vendor:
 
 clean:
 	rm -rf vendor/ gochatbot
+
+novendor:
+	cat glide.yaml | grep -i '\- package' | awk '{ print $$3 }' | xargs go get -u || exit 0
+
+quickstart: novendor
+	go build -tags "$(GCBFLAGS)"

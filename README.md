@@ -60,8 +60,7 @@ Telegram message provider
 ### Quick start (Compiled version - Telegram - BoltDB memory)
 
 ```ShellSession
-# brew install glide
-# make all
+# make quickstart
 # GOCHATBOT_TELEGRAM_TOKEN=#####:... GOCHATBOT_BOLT_FILENAME=gochatbot.db ./gochatbot
 ```
 
