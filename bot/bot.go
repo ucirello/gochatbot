@@ -64,6 +64,11 @@ func (s *Self) Process() {
 				continue
 			}
 			go func(self Self, msg messages.Message) {
+				defer func() {
+					if r := recover(); r != nil {
+						log.Printf("panic recovered when parsing message: %#v. Panic: %v", msg, r)
+					}
+				}()
 				for _, rule := range s.rules {
 					responses := rule.ParseMessage(self, msg)
 					for _, r := range responses {
