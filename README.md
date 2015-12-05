@@ -7,6 +7,7 @@ It features:
 - Support for Slack, Telegram and IRC
 - Non-durable and durable memory with BoltDB and Redis
 - Two ready to use rulesets: regex parsed messages and cron events
+- Easy integration with other programming languages through webservice RPC (JSON)
 - Container ready to use and easy to deploy
 
 Requirements:
@@ -41,6 +42,9 @@ Slack message provider
 
 Telegram message provider
  * `GOCHATBOT_TELEGRAM_TOKEN` - Telegram user token for the chatbot
+
+RPC
+ * `GOCHATBOT_RPC_BIND` - local IP address to bind the RPC HTTP server
 
 ### Quick start (Docker version - Slack - Non-durable memory)
 
@@ -187,6 +191,42 @@ var cronRules = map[string]cron.Rule{
 	},
 }
 ```
+
+### Integrating with other languages (RPC)
+
+If `GOCHATBOT_RPC_BIND` is set, gochatbot will open a HTTP server in the given
+address and it will expose two endpoints: `/pop` and `/send`.
+
+Both of them use a JSON serialized version of the internal representation of
+messages. Thus if you get from `/pop` this:
+
+```json
+{
+	"Room":"room",
+	"FromUserID":"fUID",
+	"FromUserName":"fName",
+	"ToUserID":"tUID",
+	"ToUserName":"tName",
+	"Message":"Message"
+}
+```
+
+Probably you should be inverting From* with To* and returning something like
+this (note the inversion of "from" with "to" values):
+
+```json
+{
+	"Room":"room",
+	"FromUserID":"tUID",
+	"FromUserName":"tName",
+	"ToUserID":"fUID",
+	"ToUserName":"fName",
+	"Message":"Message"
+}
+```
+
+Check the [`rpc-example.php`](https://github.com/ccirello/gochatbot/blob/master/rpc-example.php)
+file for an implementation of an echo service in PHP.
 
 ### Guarantees
 
