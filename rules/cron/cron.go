@@ -55,7 +55,7 @@ func (r *cronRuleset) loadMemory(self *bot.Self) {
 
 func (r cronRuleset) HelpMessage(self bot.Self) string {
 	helpMsg := fmt.Sprintln("cron attach <job name>- attach one cron job to a room")
-	helpMsg = fmt.Sprintln(helpMsg, "cron dettach <job name> - dettach one cron job from a room")
+	helpMsg = fmt.Sprintln(helpMsg, "cron detach <job name> - detach one cron job from a room")
 	helpMsg = fmt.Sprintln(helpMsg, "cron list - list all available crons")
 	helpMsg = fmt.Sprintln(helpMsg, "cron start - start all crons")
 	helpMsg = fmt.Sprintln(helpMsg, "cron stop - stop all crons")
@@ -79,14 +79,14 @@ func (r *cronRuleset) ParseMessage(self bot.Self, in messages.Message) []message
 		return ret
 	}
 
-	if strings.HasPrefix(in.Message, "cron dettach") {
-		ruleName := strings.TrimSpace(strings.TrimPrefix(in.Message, "cron dettach"))
+	if strings.HasPrefix(in.Message, "cron detach") {
+		ruleName := strings.TrimSpace(strings.TrimPrefix(in.Message, "cron detach"))
 		return []messages.Message{
 			{
 				Room:       in.Room,
 				ToUserID:   in.FromUserID,
 				ToUserName: in.FromUserName,
-				Message:    r.dettach(self, ruleName, in.Room),
+				Message:    r.detach(self, ruleName, in.Room),
 			},
 		}
 	}
@@ -144,7 +144,7 @@ func (r *cronRuleset) attach(self bot.Self, ruleName, room string) string {
 	return ruleName + " attached to this room"
 }
 
-func (r *cronRuleset) dettach(self bot.Self, ruleName, room string) string {
+func (r *cronRuleset) detach(self bot.Self, ruleName, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -161,7 +161,7 @@ func (r *cronRuleset) dettach(self bot.Self, ruleName, room string) string {
 	}
 	r.attachedCrons[room] = newRoom
 	self.MemorySave("cron", "attached", r.attachedCrons)
-	return ruleName + " dettached to this room"
+	return ruleName + " detached to this room"
 }
 
 func (r *cronRuleset) start() {
