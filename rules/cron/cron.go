@@ -153,7 +153,7 @@ func (r *cronRuleset) detach(self bot.Self, ruleName, room string) string {
 	defer r.mu.Unlock()
 
 	if _, ok := r.attachedCrons[room]; !ok {
-		return room + " not found"
+		return "room not found in cron memory"
 	}
 
 	var newRoom []string
