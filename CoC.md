@@ -165,7 +165,7 @@ reports to CoC Working Group).
 * Treat everyone with respect and kindness.
 * Be thoughtful in how you communicate.
 * Don’t be destructive or inflammatory.
-* If you encounter an issue, please mail <carlos.cirello.nl@gmail.com> or <pigiman@gmail.com>.
+* If you encounter an issue, please mail <carlos.cirello.nl@gmail.com>.
 
 #### Acknowledgements
 
