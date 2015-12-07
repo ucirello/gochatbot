@@ -1,3 +1,5 @@
+// +build all,!multi !multi
+
 package main // import "cirello.io/gochatbot"
 
 import (

@@ -9,6 +9,7 @@ It features:
 - Two ready to use rulesets: regex parsed messages and cron events
 - Easy integration with other programming languages through webservice RPC (JSON)
 - Container ready to use and easy to deploy
+- Possibility to deploy more than one bot with the same binary
 
 Requirements:
 [glide](https://github.com/Masterminds/glide) and [Go 1.5 or newer](http://golang.org).
@@ -227,6 +228,41 @@ this (note the inversion of "from" with "to" values):
 
 Check the [`rpc-example.php`](https://github.com/ccirello/gochatbot/blob/master/rpc-example.php)
 file for an implementation of an echo service in PHP.
+
+### Multibot mode
+
+You might find yourself in a situation where you want to deploy the same bot in
+two or more places at the same time. Perhaps, even sharing the same memory. It
+is possible to activate the multi-mode for gochatbot. Compile with `multi` build
+tag:
+
+```ShellSession
+# go build -tags 'all multi' # 'multi' will use gochatbot-multi.go instead of gochatbot.go
+```
+
+Each configuration variable must be adapted with an index. Therefore:
+
+```ShellSession
+# export GOCHATBOT_NAME="gochatbot"
+# export GOCHATBOT_BOLT_FILENAME="gochatbot.db"
+# export GOCHATBOT_SLACK_TOKEN="slack-token"
+```
+
+will need to be translated with an index number in the middle, like:
+
+```ShellSession
+# export GOCHATBOT_0_NAME="gochatbot"
+# export GOCHATBOT_0_BOLT_FILENAME="gochatbot.db"
+# export GOCHATBOT_0_SLACK_TOKEN="slack-token"
+
+# export GOCHATBOT_1_NAME="gochatbot"
+# export GOCHATBOT_1_BOLT_FILENAME="gochatbot.db"
+# export GOCHATBOT_1_TELEGRAM_TOKEN="telegram-token"
+```
+
+(The bot will connect to both Slack and Telegram)
+
+
 
 ### Guarantees
 
