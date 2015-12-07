@@ -19,13 +19,11 @@ type Rule struct {
 
 type cronRuleset struct {
 	outCh     chan messages.Message
-	stopChan  []chan struct{}
 	cronRules map[string]Rule
-
-	loadOnce sync.Once
 
 	mu            sync.Mutex
 	attachedCrons map[string][]string
+	stopChan      []chan struct{}
 }
 
 // Name returns this rules name - meant for debugging.
@@ -171,10 +169,11 @@ func (r *cronRuleset) detach(self bot.Self, ruleName, room string) string {
 }
 
 func (r *cronRuleset) start() {
+	r.stop()
+
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.stop()
 	for room, rules := range r.attachedCrons {
 		for _, rule := range rules {
 			c := make(chan struct{})
@@ -205,6 +204,9 @@ func processCronRule(rule Rule, stop chan struct{}, outCh chan messages.Message,
 }
 
 func (r *cronRuleset) stop() {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
 	for _, c := range r.stopChan {
 		c <- struct{}{}
 	}
