@@ -67,7 +67,7 @@ func (r opsRuleset) HelpMessage(self bot.Self) string {
 	msg := fmt.Sprintln(botName, "ops uptime host-group - get uptime of all hosts of a host-group")
 	msg = fmt.Sprintln(msg, botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
 	msg = fmt.Sprintln(msg, botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")
-	msg = fmt.Sprintln(msg, botName, "ops configure hostgroup username keyfile/ - configure ssh login credentials (use the word 'agent' instead of keyfile URI to use ssh-agent on gochatbot machine.")
+	msg = fmt.Sprintln(msg, botName, "ops configure hostgroup username keyfile - configure ssh login credentials (don't provide keyfile to force the use of ssh-agent)")
 	return msg
 }
 
@@ -97,7 +97,11 @@ func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.
 			Message:      r.remove(self, host, hostGroup),
 		}
 	} else if strings.HasPrefix(cmd, "ops configure") {
-		hostGroup, username, sshKeyFile := parts[2], parts[3], parts[4]
+		var sshKeyFile string
+		hostGroup, username := parts[2], parts[3]
+		if len(parts) == 5 {
+			sshKeyFile = parts[4]
+		}
 		msg = messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
@@ -209,7 +213,7 @@ func (r *opsRuleset) uptime(in messages.Message, hostGroup string) {
 				return
 			}
 			authMethod := ssh.PublicKeyFile(conf.SSHKeyFile)
-			if conf.SSHKeyFile == "agent" {
+			if conf.SSHKeyFile == "" {
 				authMethod = ssh.SshAgent(os.Getenv)
 			}
 			out, err := ssh.Run(
