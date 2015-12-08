@@ -193,6 +193,18 @@ var cronRules = map[string]cron.Rule{
 }
 ```
 
+### Other ruleset
+
+#### Reddit ruleset
+
+It is possible to track Reddit content with gochatbot. Useful when the team
+needs to monitor it for upcoming events, like release notifications.
+
+```
+reddit follow subreddit- follow one subreddit in a room
+reddit unfollow subreddit - unfollow one subreddit in a room
+```
+
 ### Integrating with other languages (RPC)
 
 If `GOCHATBOT_RPC_BIND` is set, gochatbot will open a HTTP server in the given
