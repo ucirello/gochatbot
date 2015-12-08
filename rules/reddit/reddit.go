@@ -136,7 +136,7 @@ func (r *redditRuleset) unfollow(self bot.Self, subreddit, room string) string {
 }
 
 func (r *redditRuleset) start() {
-	c := time.Tick(5 * time.Second)
+	c := time.Tick(30 * time.Second)
 	for range c {
 		r.mu.Lock()
 		for room, subreddits := range r.subreddits {
