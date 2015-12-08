@@ -26,3 +26,5 @@ import:
   version: db3338ebd4546123dfcde5dfad6057d1d646a42d
 - package: github.com/gorhill/cronexpr
   version: a557574d6c024ed6e36acc8b610f5f211c91568a
+- package: github.com/jeffail/gabs
+  version: b69c9e648a2529c8d7b927ba7f87bc7fe0b3b0ea
