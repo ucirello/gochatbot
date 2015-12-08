@@ -25,6 +25,9 @@ type redditRuleset struct {
 	mu         sync.Mutex
 	subreddits map[string][]string
 	recents    map[string]string
+
+	memoryRead func(string, string) interface{}
+	memorySave func(string, string, interface{})
 }
 
 // Name returns this rules name - meant for debugging.
@@ -34,13 +37,14 @@ func (r *redditRuleset) Name() string {
 
 // Boot runs preparatory steps for ruleset execution
 func (r *redditRuleset) Boot(self *bot.Self) {
-	r.loadMemory(self)
+	r.memoryRead = self.MemoryRead
+	r.memorySave = self.MemorySave
+	r.loadMemory()
 }
 
-func (r *redditRuleset) loadMemory(self *bot.Self) {
+func (r *redditRuleset) loadMemory() {
 	log.Println("reddit: reading from memory")
-	v := self.MemoryRead("reddit", "follow")
-	if vs, ok := v.(map[string]interface{}); ok {
+	if vs, ok := r.memoryRead("reddit", "follow").(map[string]interface{}); ok {
 		for room, isubreddits := range vs {
 			if subreddits, ok := isubreddits.([]interface{}); ok {
 				for _, subreddit := range subreddits {
@@ -48,7 +52,13 @@ func (r *redditRuleset) loadMemory(self *bot.Self) {
 				}
 			}
 		}
-		log.Println("reddit: memory read")
+		log.Println("reddit: memory (follow) read")
+	}
+	if vs, ok := r.memoryRead("reddit", "recents").(map[string]interface{}); ok {
+		for room, recent := range vs {
+			r.recents[room] = fmt.Sprint(recent)
+		}
+		log.Println("reddit: memory (recent) read")
 	}
 	go r.start()
 }
@@ -69,7 +79,7 @@ func (r *redditRuleset) ParseMessage(self bot.Self, in messages.Message) []messa
 				Room:       in.Room,
 				ToUserID:   in.FromUserID,
 				ToUserName: in.FromUserName,
-				Message:    r.follow(self, subreddit, in.Room),
+				Message:    r.follow(subreddit, in.Room),
 			},
 		}
 		return ret
@@ -82,7 +92,7 @@ func (r *redditRuleset) ParseMessage(self bot.Self, in messages.Message) []messa
 				Room:       in.Room,
 				ToUserID:   in.FromUserID,
 				ToUserName: in.FromUserName,
-				Message:    r.unfollow(self, subreddit, in.Room),
+				Message:    r.unfollow(subreddit, in.Room),
 			},
 		}
 	}
@@ -90,7 +100,7 @@ func (r *redditRuleset) ParseMessage(self bot.Self, in messages.Message) []messa
 	return []messages.Message{}
 }
 
-func (r *redditRuleset) follow(self bot.Self, subreddit, room string) string {
+func (r *redditRuleset) follow(subreddit, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -106,11 +116,11 @@ func (r *redditRuleset) follow(self bot.Self, subreddit, room string) string {
 	}
 
 	r.subreddits[room] = append(r.subreddits[room], subredditURL)
-	self.MemorySave("reddit", "follow", r.subreddits)
+	r.memorySave("reddit", "follow", r.subreddits)
 	return subredditURL + " followed in this room"
 }
 
-func (r *redditRuleset) unfollow(self bot.Self, subreddit, room string) string {
+func (r *redditRuleset) unfollow(subreddit, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -130,7 +140,7 @@ func (r *redditRuleset) unfollow(self bot.Self, subreddit, room string) string {
 		newRoom = append(newRoom, sr)
 	}
 	r.subreddits[room] = newRoom
-	self.MemorySave("reddit", "follow", r.subreddits)
+	r.memorySave("reddit", "follow", r.subreddits)
 
 	return subreddit + " not followed in this room anymore"
 }
@@ -179,6 +189,7 @@ func (r *redditRuleset) readSubreddit(subreddit, room string) {
 	if _, ok := r.recents[subredditName]; !ok {
 		r.recents[subredditName] = ""
 	}
+
 	for _, child := range children {
 		title := child.Path("data.title").Data()
 		url := child.Path("data.url").Data()
@@ -202,6 +213,7 @@ func (r *redditRuleset) readSubreddit(subreddit, room string) {
 	}
 
 	r.recents[subredditName] = recent
+	r.memorySave("reddit", "recents", r.recents)
 }
 
 // New returns a reddit rule set
