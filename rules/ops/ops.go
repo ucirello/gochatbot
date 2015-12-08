@@ -65,6 +65,7 @@ func (r opsRuleset) Boot(self *bot.Self) {
 func (r opsRuleset) HelpMessage(self bot.Self) string {
 	botName := self.Name()
 	msg := fmt.Sprintln(botName, "ops uptime host-group - get uptime of all hosts of a host-group")
+	msg = fmt.Sprintln(msg, botName, "ops df host-group - get 'df -h' of all hosts of a host-group")
 	msg = fmt.Sprintln(msg, botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
 	msg = fmt.Sprintln(msg, botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")
 	msg = fmt.Sprintln(msg, botName, "ops configure hostgroup username keyfile - configure ssh login credentials (don't provide keyfile to force the use of ssh-agent)")
@@ -121,6 +122,17 @@ func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.
 			ToUserName:   in.FromUserName,
 			Message:      fmt.Sprintln("dispatched uptime call to", hostGroup),
 		}
+	} else if strings.HasPrefix(cmd, "ops df") {
+		hostGroup := parts[2]
+		go r.dfH(in, hostGroup)
+		msg = messages.Message{
+			Room:         in.Room,
+			FromUserID:   in.ToUserID,
+			FromUserName: in.ToUserName,
+			ToUserID:     in.FromUserID,
+			ToUserName:   in.FromUserName,
+			Message:      fmt.Sprintln("dispatched 'df -h' call to", hostGroup),
+		}
 	}
 
 	return []messages.Message{msg}
@@ -173,6 +185,14 @@ func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile st
 }
 
 func (r *opsRuleset) uptime(in messages.Message, hostGroup string) {
+	r.run(in, hostGroup, "/usr/bin/uptime")
+}
+
+func (r *opsRuleset) dfH(in messages.Message, hostGroup string) {
+	r.run(in, hostGroup, "/bin/df -h")
+}
+
+func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
 	if _, ok := r.hostGroups[hostGroup]; !ok {
 		r.outCh <- messages.Message{
 			Room:         in.Room,
@@ -217,7 +237,7 @@ func (r *opsRuleset) uptime(in messages.Message, hostGroup string) {
 				authMethod = ssh.SshAgent(os.Getenv)
 			}
 			out, err := ssh.Run(
-				"/usr/bin/uptime",
+				cmd,
 				[]string{},
 				conf.Username,
 				host,
