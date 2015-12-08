@@ -90,6 +90,11 @@ func (s *Self) MemorySave(namespace, key string, value interface{}) {
 	s.brain.Save(namespace, key, value)
 }
 
+// MessageProviderOut getter for message dispatch channel
+func (s *Self) MessageProviderOut() chan messages.Message {
+	return s.providerOut
+}
+
 // Name returns robot's name - identity used for answering direct messages.
 func (s *Self) Name() string {
 	return s.name

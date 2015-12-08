@@ -32,7 +32,9 @@ func (r opsRuleset) Name() string {
 }
 
 // Boot runs preparatory steps for ruleset execution
-func (r opsRuleset) Boot(self *bot.Self) {
+func (r *opsRuleset) Boot(self *bot.Self) {
+	r.outCh = self.MessageProviderOut()
+
 	log.Println("ops: reading from memory")
 	if vs, ok := self.MemoryRead("ops", "hostGroups").(map[string]interface{}); ok {
 		for hostGroup, ihosts := range vs {
@@ -289,8 +291,4 @@ func New() *opsRuleset {
 		hostGroups:     make(map[string][]string),
 		hostGroupsConf: make(map[string]sshConf),
 	}
-}
-
-func (r *opsRuleset) SetOutgoingChannel(outCh chan messages.Message) {
-	r.outCh = outCh
 }

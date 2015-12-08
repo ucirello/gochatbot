@@ -37,6 +37,7 @@ func (r *redditRuleset) Name() string {
 
 // Boot runs preparatory steps for ruleset execution
 func (r *redditRuleset) Boot(self *bot.Self) {
+	r.outCh = self.MessageProviderOut()
 	r.memoryRead = self.MemoryRead
 	r.memorySave = self.MemorySave
 	r.loadMemory()
@@ -223,10 +224,6 @@ func New() *redditRuleset {
 		recents:    make(map[string]string),
 	}
 	return r
-}
-
-func (r *redditRuleset) SetOutgoingChannel(outCh chan messages.Message) {
-	r.outCh = outCh
 }
 
 func subredditURL(subreddit string) (string, error) {

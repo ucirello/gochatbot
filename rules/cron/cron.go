@@ -33,6 +33,7 @@ func (r *cronRuleset) Name() string {
 
 // Boot runs preparatory steps for ruleset execution
 func (r *cronRuleset) Boot(self *bot.Self) {
+	r.outCh = self.MessageProviderOut()
 	r.loadMemory(self)
 }
 
@@ -220,8 +221,4 @@ func New(rules map[string]Rule) *cronRuleset {
 		cronRules:     rules,
 	}
 	return r
-}
-
-func (r *cronRuleset) SetOutgoingChannel(outCh chan messages.Message) {
-	r.outCh = outCh
 }

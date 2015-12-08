@@ -27,6 +27,7 @@ func (r *rpcRuleset) Name() string {
 
 // Boot runs preparatory steps for ruleset execution
 func (r *rpcRuleset) Boot(self *bot.Self) {
+	r.outCh = self.MessageProviderOut()
 	r.mux.HandleFunc("/pop", r.httpPop)
 	r.mux.HandleFunc("/send", r.httpSend)
 	log.Println("rpc: listening", r.bindAddr)
@@ -52,8 +53,4 @@ func New(bindAddr string) *rpcRuleset {
 		mux:      http.NewServeMux(),
 		bindAddr: bindAddr,
 	}
-}
-
-func (r *rpcRuleset) SetOutgoingChannel(outCh chan messages.Message) {
-	r.outCh = outCh
 }
