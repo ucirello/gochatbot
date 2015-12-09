@@ -1,6 +1,7 @@
 package reddit // import "cirello.io/gochatbot/rules/reddit"
 
 import (
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -26,8 +27,8 @@ type redditRuleset struct {
 	subreddits map[string][]string
 	recents    map[string]string
 
-	memoryRead func(string, string) interface{}
-	memorySave func(string, string, interface{})
+	memoryRead func(string, string) []byte
+	memorySave func(string, string, []byte)
 }
 
 // Name returns this rules name - meant for debugging.
@@ -45,20 +46,11 @@ func (r *redditRuleset) Boot(self *bot.Self) {
 
 func (r *redditRuleset) loadMemory() {
 	log.Println("reddit: reading from memory")
-	if vs, ok := r.memoryRead("reddit", "follow").(map[string]interface{}); ok {
-		for room, isubreddits := range vs {
-			if subreddits, ok := isubreddits.([]interface{}); ok {
-				for _, subreddit := range subreddits {
-					r.subreddits[room] = append(r.subreddits[room], fmt.Sprint(subreddit))
-				}
-			}
-		}
+	if err := json.Unmarshal(r.memoryRead("reddit", "follow"), &r.subreddits); err == nil {
 		log.Println("reddit: memory (follow) read")
 	}
-	if vs, ok := r.memoryRead("reddit", "recents").(map[string]interface{}); ok {
-		for room, recent := range vs {
-			r.recents[room] = fmt.Sprint(recent)
-		}
+
+	if err := json.Unmarshal(r.memoryRead("reddit", "recents"), &r.recents); err == nil {
 		log.Println("reddit: memory (recent) read")
 	}
 	go r.start()
@@ -117,7 +109,12 @@ func (r *redditRuleset) follow(subreddit, room string) string {
 	}
 
 	r.subreddits[room] = append(r.subreddits[room], subredditURL)
-	r.memorySave("reddit", "follow", r.subreddits)
+
+	b, err := json.Marshal(r.subreddits)
+	if err != nil {
+		return "could not follow " + subreddit
+	}
+	r.memorySave("reddit", "follow", b)
 	return subredditURL + " followed in this room"
 }
 
@@ -141,7 +138,12 @@ func (r *redditRuleset) unfollow(subreddit, room string) string {
 		newRoom = append(newRoom, sr)
 	}
 	r.subreddits[room] = newRoom
-	r.memorySave("reddit", "follow", r.subreddits)
+
+	b, err := json.Marshal(r.subreddits)
+	if err != nil {
+		return "could not unfollow " + subreddit
+	}
+	r.memorySave("reddit", "follow", b)
 
 	return subreddit + " not followed in this room anymore"
 }
@@ -214,7 +216,12 @@ func (r *redditRuleset) readSubreddit(subreddit, room string) {
 	}
 
 	r.recents[subredditName] = recent
-	r.memorySave("reddit", "recents", r.recents)
+
+	b, err := json.Marshal(r.recents)
+	if err != nil {
+		log.Printf("redit: error serializing subreddit json. got: %v", err)
+	}
+	r.memorySave("reddit", "recents", b)
 }
 
 // New returns a reddit rule set

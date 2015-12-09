@@ -4,8 +4,8 @@ var availableDrivers []func(func(string) string) (Memorizer, bool)
 
 // Memorizer interface describes functions to cross-messages memory.
 type Memorizer interface {
-	Save(ruleName, key string, value interface{})
-	Read(ruleName, key string) interface{}
+	Save(ruleName, key string, value []byte)
+	Read(ruleName, key string) []byte
 	Error() error
 }
 

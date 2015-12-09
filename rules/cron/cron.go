@@ -1,6 +1,7 @@
 package cron // import "cirello.io/gochatbot/rules/cron"
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"strings"
@@ -40,17 +41,14 @@ func (r *cronRuleset) Boot(self *bot.Self) {
 func (r *cronRuleset) loadMemory(self *bot.Self) {
 	log.Println("cron: reading from memory")
 	v := self.MemoryRead("cron", "attached")
-	if vs, ok := v.(map[string]interface{}); ok {
-		for room, irules := range vs {
-			if rules, ok := irules.([]interface{}); ok {
-				for _, rule := range rules {
-					r.attachedCrons[room] = append(r.attachedCrons[room], fmt.Sprint(rule))
-				}
-			}
-		}
-		log.Println("cron: memory read")
-		r.start()
+
+	if err := json.Unmarshal(v, &r.attachedCrons); err != nil {
+		log.Println("cron: error reading memory:", err, v)
+		return
 	}
+
+	log.Println("cron: memory read")
+	r.start()
 }
 
 func (r cronRuleset) HelpMessage(self bot.Self) string {
@@ -145,7 +143,13 @@ func (r *cronRuleset) attach(self bot.Self, ruleName, room string) string {
 		}
 	}
 	r.attachedCrons[room] = append(r.attachedCrons[room], ruleName)
-	self.MemorySave("cron", "attached", r.attachedCrons)
+
+	b, err := json.Marshal(r.attachedCrons)
+	if err != nil {
+		return fmt.Sprintf("error attaching %s: %v", ruleName, err)
+	}
+
+	self.MemorySave("cron", "attached", b)
 	return ruleName + " attached to this room"
 }
 
@@ -165,7 +169,12 @@ func (r *cronRuleset) detach(self bot.Self, ruleName, room string) string {
 		newRoom = append(newRoom, rn)
 	}
 	r.attachedCrons[room] = newRoom
-	self.MemorySave("cron", "attached", r.attachedCrons)
+
+	b, err := json.Marshal(r.attachedCrons)
+	if err != nil {
+		return fmt.Sprintf("error detaching %s: %v", ruleName, err)
+	}
+	self.MemorySave("cron", "attached", b)
 	return ruleName + " detached to this room"
 }
 

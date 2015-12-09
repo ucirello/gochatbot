@@ -3,20 +3,20 @@ package brain // import "cirello.io/gochatbot/brain"
 import "sync"
 
 type brainMemory struct {
-	mu    sync.Mutex             // serializes items access
-	items map[string]interface{} // rule name + key
+	mu    sync.Mutex        // serializes items access
+	items map[string][]byte // rule name + key
 }
 
 // Brain constructs brainMemory
 func Brain() *brainMemory {
 	b := &brainMemory{
-		items: make(map[string]interface{}),
+		items: make(map[string][]byte),
 	}
 	return b
 }
 
 // Save stores into Brain some arbritary value.
-func (b *brainMemory) Save(ruleName, key string, value interface{}) {
+func (b *brainMemory) Save(ruleName, key string, value []byte) {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
@@ -25,14 +25,14 @@ func (b *brainMemory) Save(ruleName, key string, value interface{}) {
 }
 
 // Read reads from Brain some arbritary value.
-func (b *brainMemory) Read(ruleName, key string) interface{} {
+func (b *brainMemory) Read(ruleName, key string) []byte {
 	b.mu.Lock()
 	defer b.mu.Unlock()
 
 	k := fullKeyName(ruleName, key)
 	v, ok := b.items[k]
 	if !ok {
-		return nil
+		return []byte{}
 	}
 	return v
 }

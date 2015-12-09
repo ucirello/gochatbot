@@ -3,7 +3,6 @@
 package brain // import "cirello.io/gochatbot/brain"
 
 import (
-	"encoding/json"
 	"log"
 
 	"github.com/boltdb/bolt"
@@ -61,26 +60,23 @@ func (b *BoltMemory) Error() error {
 }
 
 // Save stores into Brain some arbritary value.
-func (b *BoltMemory) Save(ruleName, key string, value interface{}) {
+func (b *BoltMemory) Save(ruleName, key string, value []byte) {
 	b.brain.Save(ruleName, key, value)
 
 	b.bolt.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(ruleName))
 		if err != nil {
+			log.Println("bolt: error saving:", err)
 			return err
 		}
-		output, err := json.Marshal(value)
-		if err != nil {
-			return err
-		}
-		return b.Put([]byte(key), output)
+		return b.Put([]byte(key), value)
 	})
 }
 
 // Read reads from Brain some arbritary value.
-func (b *BoltMemory) Read(ruleName, key string) interface{} {
+func (b *BoltMemory) Read(ruleName, key string) []byte {
 	v := b.brain.Read(ruleName, key)
-	if v != nil {
+	if len(v) > 0 {
 		return v
 	}
 
@@ -95,9 +91,5 @@ func (b *BoltMemory) Read(ruleName, key string) interface{} {
 		return nil
 	})
 
-	var ret interface{}
-	if err := json.Unmarshal(found, &ret); err != nil {
-		return nil
-	}
-	return ret
+	return found
 }

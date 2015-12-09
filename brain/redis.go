@@ -3,7 +3,6 @@
 package brain // import "cirello.io/gochatbot/brain"
 
 import (
-	"encoding/json"
 	"log"
 	"strconv"
 
@@ -85,17 +84,10 @@ func (r *RedisMemory) calculateKey(ruleName, key string) string {
 }
 
 // Save stores into Brain some arbritary value.
-func (r *RedisMemory) Save(ruleName, key string, value interface{}) {
+func (r *RedisMemory) Save(ruleName, key string, value []byte) {
 	r.brain.Save(ruleName, key, value)
 
-	output, err := json.Marshal(value)
-	if err != nil {
-		log.Println("redis err (set):", err)
-		r.err = err
-		return
-	}
-
-	if err := r.db.Set(r.calculateKey(ruleName, key), output, 0).Err(); err != nil {
+	if err := r.db.Set(r.calculateKey(ruleName, key), value, 0).Err(); err != nil {
 		log.Println("redis err (set):", err)
 		r.err = err
 		return
@@ -103,9 +95,9 @@ func (r *RedisMemory) Save(ruleName, key string, value interface{}) {
 }
 
 // Read reads from Brain some arbritary value.
-func (r *RedisMemory) Read(ruleName, key string) interface{} {
+func (r *RedisMemory) Read(ruleName, key string) []byte {
 	v := r.brain.Read(ruleName, key)
-	if v != nil {
+	if len(v) > 0 {
 		return v
 	}
 
@@ -116,12 +108,5 @@ func (r *RedisMemory) Read(ruleName, key string) interface{} {
 		return nil
 	}
 
-	var ret interface{}
-	if err := json.Unmarshal([]byte(found), &ret); err != nil {
-		log.Println("redis err (get):", err)
-		r.err = err
-		return nil
-	}
-
-	return ret
+	return []byte(found)
 }

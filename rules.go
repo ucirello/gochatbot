@@ -34,8 +34,8 @@ var regexRules = []regex.Rule{
 			var ret []string
 			ret = append(ret, "{{ .User }}, How high?")
 			lastJumpTS := bot.MemoryRead("jump", "lastJump")
-			ret = append(ret, fmt.Sprint("{{ .User }} (last time I jumped:", lastJumpTS, ")"))
-			bot.MemorySave("jump", "lastJump", fmt.Sprint(time.Now()))
+			ret = append(ret, fmt.Sprintf("{{ .User }} (last time I jumped: %s)", lastJumpTS))
+			bot.MemorySave("jump", "lastJump", []byte(time.Now().String()))
 
 			return ret
 		},

@@ -1,6 +1,7 @@
 package ops // import "cirello.io/gochatbot/rules/ops"
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net"
@@ -36,32 +37,13 @@ func (r *opsRuleset) Boot(self *bot.Self) {
 	r.outCh = self.MessageProviderOut()
 
 	log.Println("ops: reading from memory")
-	if vs, ok := self.MemoryRead("ops", "hostGroups").(map[string]interface{}); ok {
-		for hostGroup, ihosts := range vs {
-			if hosts, ok := ihosts.([]interface{}); ok {
-				for _, host := range hosts {
-					r.hostGroups[hostGroup] = append(r.hostGroups[hostGroup], fmt.Sprint(host))
-				}
-			}
-		}
+	if err := json.Unmarshal(self.MemoryRead("ops", "hostGroups"), &r.hostGroups); err == nil {
 		log.Println("ops: hostGroups read")
 	}
 
-	if vs, ok := self.MemoryRead("ops", "hostGroupsConf").(map[string]interface{}); ok {
-		for hostGroup, iconf := range vs {
-			if conf, ok := iconf.(map[string]interface{}); ok {
-				if _, ok := conf["Username"]; !ok {
-					continue
-				}
-				r.hostGroupsConf[hostGroup] = sshConf{
-					Username:   fmt.Sprint(conf["Username"]),
-					SSHKeyFile: fmt.Sprint(conf["SSHKeyFile"]),
-				}
-			}
-		}
+	if err := json.Unmarshal(self.MemoryRead("ops", "hostGroupsConf"), &r.hostGroupsConf); err == nil {
 		log.Println("ops: hostGroupsConf read")
 	}
-
 }
 
 func (r opsRuleset) HelpMessage(self bot.Self) string {
@@ -156,8 +138,13 @@ func (r *opsRuleset) add(self bot.Self, host, hostGroup string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	r.hostGroups[hostGroup] = append(r.hostGroups[hostGroup], host)
-	self.MemorySave("ops", "hostGroups", r.hostGroups)
+	r.hostGroups[hostGroup] = append(r.hostGroups[hostGroup], strings.TrimSpace(host))
+
+	b, err := json.Marshal(r.hostGroups)
+	if err != nil {
+		return fmt.Sprintf("error adding host to host group. got:", err)
+	}
+	self.MemorySave("ops", "hostGroups", b)
 
 	return fmt.Sprintln(host, "added to host group", hostGroup)
 }
@@ -170,19 +157,22 @@ func (r *opsRuleset) remove(self bot.Self, host, hostGroup string) string {
 		return "host group not found"
 	}
 
-	r.hostGroups[hostGroup] = append(r.hostGroups[hostGroup], host)
-
 	var newHG []string
 	for _, h := range r.hostGroups[hostGroup] {
-		if h == host {
+		if strings.TrimSpace(h) == strings.TrimSpace(host) {
 			continue
 		}
 		newHG = append(newHG, host)
 	}
 	r.hostGroups[hostGroup] = newHG
-	self.MemorySave("ops", "hostGroups", r.hostGroups)
 
-	return fmt.Sprintln(host, "added to host group", hostGroup)
+	b, err := json.Marshal(r.hostGroups)
+	if err != nil {
+		return fmt.Sprintf("error removing host from host group. got: %v", err)
+	}
+	self.MemorySave("ops", "hostGroups", b)
+
+	return fmt.Sprintln(host, "removed from host group", hostGroup)
 }
 
 func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile string) string {
@@ -193,7 +183,12 @@ func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile st
 		Username:   username,
 		SSHKeyFile: sshKeyFile,
 	}
-	self.MemorySave("ops", "hostGroupsConf", r.hostGroupsConf)
+
+	b, err := json.Marshal(r.hostGroupsConf)
+	if err != nil {
+		return fmt.Sprintf("error configuring host group. got: %v", err)
+	}
+	self.MemorySave("ops", "hostGroupsConf", b)
 
 	return fmt.Sprintln(hostGroup, "configured")
 }
