@@ -59,6 +59,7 @@ func (r *redditRuleset) loadMemory() {
 func (r redditRuleset) HelpMessage(self bot.Self) string {
 	helpMsg := fmt.Sprintln("reddit follow <subreddit>- follow one subreddit in a room")
 	helpMsg = fmt.Sprintln(helpMsg, "reddit unfollow <subreddit> - unfollow one subreddit in a room")
+	helpMsg = fmt.Sprintln(helpMsg, "reddit list - list the followed subreddits in a room")
 	helpMsg = fmt.Sprintln(helpMsg, "reddit help - this message")
 
 	return helpMsg
@@ -90,22 +91,43 @@ func (r *redditRuleset) ParseMessage(self bot.Self, in messages.Message) []messa
 		}
 	}
 
+	if strings.HasPrefix(in.Message, "reddit list") {
+		return []messages.Message{
+			{
+				Room:       in.Room,
+				ToUserID:   in.FromUserID,
+				ToUserName: in.FromUserName,
+				Message:    r.list(in.Room),
+			},
+		}
+	}
 	return []messages.Message{}
+}
+
+func (r *redditRuleset) list(room string) string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	return fmt.Sprintln("followed subreddits in this room:", r.subreddits[room])
 }
 
 func (r *redditRuleset) follow(subreddit, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	for _, sr := range r.subreddits[room] {
-		if sr == subreddit {
-			return subreddit + " already followed in this room"
-		}
+	if !strings.HasPrefix(subreddit, "/r/") {
+		subreddit = fmt.Sprint("/r/", subreddit)
 	}
 
 	subredditURL, err := subredditURL(subreddit)
 	if err != nil {
 		return "could not follow " + subreddit
+	}
+
+	for _, sr := range r.subreddits[room] {
+		if sr == subredditURL {
+			return subreddit + " already followed in this room"
+		}
 	}
 
 	r.subreddits[room] = append(r.subreddits[room], subredditURL)
@@ -126,16 +148,20 @@ func (r *redditRuleset) unfollow(subreddit, room string) string {
 		return "room not found in reddit memory"
 	}
 
+	if !strings.HasPrefix(subreddit, "/r/") {
+		subreddit = fmt.Sprint("/r/", subreddit)
+	}
+
+	url, err := subredditURL(subreddit)
+	if err != nil {
+		return subreddit + " cannot not be removed"
+	}
 	var newRoom []string
 	for _, sr := range r.subreddits[room] {
-		url, err := subredditURL(subreddit)
-		if err != nil {
-			continue
-		}
 		if sr == url {
 			continue
 		}
-		newRoom = append(newRoom, sr)
+		newRoom = append(newRoom, url)
 	}
 	r.subreddits[room] = newRoom
 
