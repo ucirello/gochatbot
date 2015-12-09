@@ -13,6 +13,9 @@ import (
 type rpcRuleset struct {
 	mux *http.ServeMux
 
+	memoryRead func(ruleName, key string) []byte
+	memorySave func(ruleName, key string, value []byte)
+
 	bindAddr string
 	outCh    chan messages.Message
 
@@ -27,9 +30,13 @@ func (r *rpcRuleset) Name() string {
 
 // Boot runs preparatory steps for ruleset execution
 func (r *rpcRuleset) Boot(self *bot.Self) {
+	r.memoryRead = self.MemoryRead
+	r.memorySave = self.MemorySave
 	r.outCh = self.MessageProviderOut()
 	r.mux.HandleFunc("/pop", r.httpPop)
 	r.mux.HandleFunc("/send", r.httpSend)
+	r.mux.HandleFunc("/memoryRead", r.httpMemoryRead)
+	r.mux.HandleFunc("/memorySave", r.httpMemorySave)
 	log.Println("rpc: listening", r.bindAddr)
 	go http.ListenAndServe(r.bindAddr, r.mux)
 }

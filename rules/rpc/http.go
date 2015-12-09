@@ -3,6 +3,7 @@ package rpc // import "cirello.io/gochatbot/rules/rpc"
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"net/http"
 
@@ -42,5 +43,32 @@ func (r *rpcRuleset) httpSend(w http.ResponseWriter, req *http.Request) {
 	go func(m messages.Message) {
 		r.outCh <- m
 	}(msg)
+	fmt.Fprintln(w, "OK")
+}
+
+func (r *rpcRuleset) httpMemoryRead(w http.ResponseWriter, req *http.Request) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+
+	namespace := req.URL.Query().Get("namespace")
+	key := req.URL.Query().Get("key")
+
+	fmt.Fprint(w, r.memoryRead(namespace, key))
+}
+
+func (r *rpcRuleset) httpMemorySave(w http.ResponseWriter, req *http.Request) {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	defer req.Body.Close()
+
+	namespace := req.URL.Query().Get("namespace")
+	key := req.URL.Query().Get("key")
+
+	b, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		fmt.Fprintln(w, err)
+		return
+	}
+	r.memorySave(namespace, key, b)
 	fmt.Fprintln(w, "OK")
 }
