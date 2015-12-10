@@ -39,7 +39,7 @@ func main() {
 		bot.RegisterRuleset(regex.New(regexRules)),
 		bot.RegisterRuleset(cron.New(cronRules)),
 		bot.RegisterRuleset(reddit.New()),
-		bot.RegisterRuleset(ops.New()),
+		bot.RegisterRuleset(ops.New(opsCmds)),
 	}
 
 	rpcHostAddr := os.Getenv("GOCHATBOT_RPC_BIND")

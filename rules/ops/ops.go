@@ -20,6 +20,7 @@ type sshConf struct {
 }
 
 type opsRuleset struct {
+	cmds  map[string]string
 	outCh chan messages.Message
 
 	mu             sync.Mutex
@@ -48,12 +49,13 @@ func (r *opsRuleset) Boot(self *bot.Self) {
 
 func (r opsRuleset) HelpMessage(self bot.Self) string {
 	botName := self.Name()
-	msg := fmt.Sprintln(botName, "ops uptime host-group - get uptime of all hosts of a host-group")
-	msg = fmt.Sprintln(msg, botName, "ops df host-group - get 'df -h' of all hosts of a host-group")
-	msg = fmt.Sprintln(msg, botName, "ops memfree host-group - get 'free -m' of all hosts of a host-group")
-	msg = fmt.Sprintln(msg, botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
+	msg := fmt.Sprintln(botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
 	msg = fmt.Sprintln(msg, botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")
 	msg = fmt.Sprintln(msg, botName, "ops configure hostgroup username keyfile - configure ssh login credentials (don't provide keyfile to force the use of ssh-agent)")
+
+	for cmd, desc := range r.cmds {
+		msg = fmt.Sprintln(msg, botName, "ops", cmd, "-", desc)
+	}
 	return msg
 }
 
@@ -96,38 +98,21 @@ func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.
 			ToUserName:   in.FromUserName,
 			Message:      r.configure(self, hostGroup, username, sshKeyFile),
 		}
-	} else if strings.HasPrefix(cmd, "ops uptime") {
-		hostGroup := parts[2]
-		go r.uptime(in, hostGroup)
-		msg = messages.Message{
-			Room:         in.Room,
-			FromUserID:   in.ToUserID,
-			FromUserName: in.ToUserName,
-			ToUserID:     in.FromUserID,
-			ToUserName:   in.FromUserName,
-			Message:      fmt.Sprintln("dispatched uptime call to", hostGroup),
-		}
-	} else if strings.HasPrefix(cmd, "ops df") {
-		hostGroup := parts[2]
-		go r.dfH(in, hostGroup)
-		msg = messages.Message{
-			Room:         in.Room,
-			FromUserID:   in.ToUserID,
-			FromUserName: in.ToUserName,
-			ToUserID:     in.FromUserID,
-			ToUserName:   in.FromUserName,
-			Message:      fmt.Sprintln("dispatched 'df -h' call to", hostGroup),
-		}
-	} else if strings.HasPrefix(cmd, "ops memfree") {
-		hostGroup := parts[2]
-		go r.freeM(in, hostGroup)
-		msg = messages.Message{
-			Room:         in.Room,
-			FromUserID:   in.ToUserID,
-			FromUserName: in.ToUserName,
-			ToUserID:     in.FromUserID,
-			ToUserName:   in.FromUserName,
-			Message:      fmt.Sprintln("dispatched 'free -m' call to", hostGroup),
+	} else {
+		msg = messages.Message{}
+		for allowedCmd, _ := range r.cmds {
+			if strings.HasPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))) {
+				hostGroup := strings.TrimSpace(strings.TrimPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))))
+				go r.run(in, hostGroup, allowedCmd)
+				msg = messages.Message{
+					Room:         in.Room,
+					FromUserID:   in.ToUserID,
+					FromUserName: in.ToUserName,
+					ToUserID:     in.FromUserID,
+					ToUserName:   in.FromUserName,
+					Message:      fmt.Sprintf("dispatched '%s' call to %s", allowedCmd, hostGroup),
+				}
+			}
 		}
 	}
 
@@ -191,18 +176,6 @@ func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile st
 	self.MemorySave("ops", "hostGroupsConf", b)
 
 	return fmt.Sprintln(hostGroup, "configured")
-}
-
-func (r *opsRuleset) uptime(in messages.Message, hostGroup string) {
-	r.run(in, hostGroup, "/usr/bin/uptime")
-}
-
-func (r *opsRuleset) dfH(in messages.Message, hostGroup string) {
-	r.run(in, hostGroup, "/bin/df -h")
-}
-
-func (r *opsRuleset) freeM(in messages.Message, hostGroup string) {
-	r.run(in, hostGroup, "free -m")
 }
 
 func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
@@ -281,8 +254,10 @@ func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
 }
 
 // New returns a ops ruleset
-func New() *opsRuleset {
+func New(cmds map[string]string) *opsRuleset {
 	return &opsRuleset{
+		cmds: cmds,
+
 		hostGroups:     make(map[string][]string),
 		hostGroupsConf: make(map[string]sshConf),
 	}

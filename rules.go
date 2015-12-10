@@ -16,6 +16,12 @@ import (
 	"cirello.io/gochatbot/rules/regex"
 )
 
+var opsCmds = map[string]string{
+	"uptime":  "get 'uptime' of all hosts of a host-group",
+	"df -h":   "get 'df -h' of all hosts of a host-group",
+	"free -m": "get 'free -m' of all hosts of a host-group",
+}
+
 var cronRules = map[string]cron.Rule{
 	"message of the day": {
 		"0 10 * * *",
