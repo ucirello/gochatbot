@@ -5,7 +5,9 @@ package main // import "cirello.io/gochatbot"
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
+	"path/filepath"
 	"strings"
 	"sync"
 
@@ -14,6 +16,7 @@ import (
 	"cirello.io/gochatbot/providers"
 	"cirello.io/gochatbot/rules/cron"
 	"cirello.io/gochatbot/rules/ops"
+	"cirello.io/gochatbot/rules/plugins"
 	"cirello.io/gochatbot/rules/reddit"
 	"cirello.io/gochatbot/rules/regex"
 	"cirello.io/gochatbot/rules/rpc"
@@ -23,6 +26,10 @@ func main() {
 
 	var wg sync.WaitGroup
 	var botCount int
+	wd, err := filepath.Abs(filepath.Dir(os.Args[0]))
+	if err != nil {
+		log.Fatalln("plugins: error detecting working directory:", err)
+	}
 
 	for {
 		e := &envGet{botCount}
@@ -54,13 +61,18 @@ func main() {
 				bot.RegisterRuleset(cron.New(cronRules)),
 				bot.RegisterRuleset(reddit.New()),
 				bot.RegisterRuleset(ops.New(opsCmds)),
+				bot.RegisterRuleset(plugins.New(wd)),
 			}
 
 			rpcHostAddr := e.getenv("GOCHATBOT_RPC_BIND")
 			if rpcHostAddr != "" {
+				l, err := net.Listen("tcp4", rpcHostAddr)
+				if err != nil {
+					log.Fatalf("rpc: cannot bind. err: %v", err)
+				}
 				options = append(
 					options,
-					bot.RegisterRuleset(rpc.New(rpcHostAddr)),
+					bot.RegisterRuleset(rpc.New(l)),
 				)
 			}
 

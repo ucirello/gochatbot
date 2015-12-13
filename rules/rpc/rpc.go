@@ -3,6 +3,7 @@ package rpc // import "cirello.io/gochatbot/rules/rpc"
 import (
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"sync"
 
@@ -16,7 +17,7 @@ type rpcRuleset struct {
 	memoryRead func(ruleName, key string) []byte
 	memorySave func(ruleName, key string, value []byte)
 
-	bindAddr string
+	listener net.Listener
 	outCh    chan messages.Message
 
 	mu    sync.Mutex
@@ -37,12 +38,12 @@ func (r *rpcRuleset) Boot(self *bot.Self) {
 	r.mux.HandleFunc("/send", r.httpSend)
 	r.mux.HandleFunc("/memoryRead", r.httpMemoryRead)
 	r.mux.HandleFunc("/memorySave", r.httpMemorySave)
-	log.Println("rpc: listening", r.bindAddr)
-	go http.ListenAndServe(r.bindAddr, r.mux)
+	log.Println("rpc: listening", r.listener.Addr())
+	go http.Serve(r.listener, r.mux)
 }
 
 func (r rpcRuleset) HelpMessage(self bot.Self) string {
-	return fmt.Sprintln("RPC listens to", r.bindAddr, "for RPC calls")
+	return fmt.Sprintln("RPC listens to", r.listener.Addr(), "for RPC calls")
 }
 
 func (r *rpcRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
@@ -55,9 +56,9 @@ func (r *rpcRuleset) ParseMessage(self bot.Self, in messages.Message) []messages
 }
 
 // New returns a RPC ruleset
-func New(bindAddr string) *rpcRuleset {
+func New(listener net.Listener) *rpcRuleset {
 	return &rpcRuleset{
 		mux:      http.NewServeMux(),
-		bindAddr: bindAddr,
+		listener: listener,
 	}
 }
