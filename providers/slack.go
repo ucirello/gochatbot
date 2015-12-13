@@ -112,7 +112,7 @@ func (p *providerSlack) handshake() {
 func (p *providerSlack) dial() {
 	log.Println("slack: dialing to HTTP WS rtm interface")
 	if p.wsURL == "" {
-		p.err = fmt.Errorf("could not connnect to Slack HTTP WS rtm. please, check your connection and your token (%s)", slackEnvVarName)
+		p.err = fmt.Errorf("could not connnect to Slack HTTP WS rtm. please, check your connection and your token (%s). error: %v", slackEnvVarName, p.err)
 		return
 	}
 	ws, err := websocket.Dial(p.wsURL, "", urlSlackAPI)

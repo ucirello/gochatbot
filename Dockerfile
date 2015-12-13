@@ -1,4 +1,4 @@
-FROM scratch
+FROM golang:alpine
 
 MAINTAINER Carlos Cirello <carlos.cirello.nl@gmail.com>
 
