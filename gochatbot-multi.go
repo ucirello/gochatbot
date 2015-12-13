@@ -53,7 +53,7 @@ func main() {
 				bot.RegisterRuleset(regex.New(regexRules)),
 				bot.RegisterRuleset(cron.New(cronRules)),
 				bot.RegisterRuleset(reddit.New()),
-				bot.RegisterRuleset(ops.New()),
+				bot.RegisterRuleset(ops.New(opsCmds)),
 			}
 
 			rpcHostAddr := e.getenv("GOCHATBOT_RPC_BIND")
