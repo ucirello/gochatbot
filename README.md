@@ -7,7 +7,7 @@ It features:
 - Support for Slack, Telegram and IRC
 - Non-durable and durable memory with BoltDB and Redis
 - Two ready to use rulesets: regex parsed messages and cron events
-- Easy integration with other programming languages through webservice RPC (JSON)
+- Easy integration with other programming languages through a plugin system (webservice JSON-RPC).
 - Container ready to use and easy to deploy
 - Possibility to deploy more than one bot with the same binary
 
@@ -208,10 +208,11 @@ reddit unfollow subreddit - unfollow one subreddit in a room
 ### Integrating with other languages (RPC)
 
 If `GOCHATBOT_RPC_BIND` is set, gochatbot will open a HTTP server in the given
-address and it will expose two endpoints: `/pop` and `/send`.
+address and it will expose four endpoints: `/pop` and `/send` for message
+handling; `/memoryRead` and `/memorySave` for memory manipulation.
 
-Both of them use a JSON serialized version of the internal representation of
-messages. Thus if you get from `/pop` this:
+Message endpoints use a JSON serialized version of the internal representation
+of messages. Thus if you get from `/pop` this:
 
 ```json
 {
@@ -240,6 +241,16 @@ this (note the inversion of "from" with "to" values):
 
 Check the [`rpc-example.php`](https://github.com/ccirello/gochatbot/blob/master/rpc-example.php)
 file for an implementation of an echo service in PHP.
+
+For memory manipulation, `/memoryRead` needs to parameters in a GET request:
+`GET /memoryRead?namespace=NS&key=K` where `NS` is the namespace isolating the
+space of memory of this plugin from the others, and `K` the key name for the
+content. The response is a raw string to be parsed by the plugin internals.
+
+`/memorySave` works similarly as `/memoryRead`, except it expects a POST call,
+and the body of the request is the raw string to be stored within the memory
+durable storage.
+
 
 ### Multibot mode
 
@@ -274,7 +285,18 @@ will need to be translated with an index number in the middle, like:
 
 (The bot will connect to both Slack and Telegram)
 
+### Plugins
 
+Gochatbot accept external plugins to its core. The plugin interface is actually
+a facade for the RPC ruleset and external files. If any file named beginning
+with `gochatbot-plugin-` and it has the execution bit set, it will be executed
+by main gochatbot process with an environmental variable `GOCHATBOT_RPC_BIND`
+containing an IPv4 address endpoint. All endpoints available for RPC ruleset
+are available in this exposition. Check `example-gochatbot-plugin-logger.sh` for
+an example of a plugin.
+
+It also means that, as long as you are to execute the file, your plugin can be
+written in any language.
 
 ### Guarantees
 
