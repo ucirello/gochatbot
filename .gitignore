@@ -32,3 +32,6 @@ gochatbot-container
 gochatbot-darwin
 gochatbot-linux
 gochatbot-windows
+gochatbot-linux.gz
+gochatbot-darwin.gz
+gochatbot-windows.gz

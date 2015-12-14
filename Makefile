@@ -22,6 +22,10 @@ quickstart: novendor
 	go build -tags "$(GCBFLAGS)"
 
 release: vendor
+	rm -f gochatbot-linux gochatbot-darwin gochatbot-windows gochatbot-linux.gz gochatbot-darwin.gz gochatbot-windows.gz
 	GOOS=linux GO15VENDOREXPERIMENT=1 go build -tags "all" -o gochatbot-linux
+	gzip -f gochatbot-linux
 	GOOS=darwin GO15VENDOREXPERIMENT=1 go build -tags "all" -o gochatbot-darwin
+	gzip -f gochatbot-darwin
 	GOOS=windows GO15VENDOREXPERIMENT=1 go build -tags "all" -o gochatbot-windows
+	gzip -f gochatbot-windows
