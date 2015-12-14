@@ -53,7 +53,7 @@ func (r *rpcRuleset) httpMemoryRead(w http.ResponseWriter, req *http.Request) {
 	namespace := req.URL.Query().Get("namespace")
 	key := req.URL.Query().Get("key")
 
-	fmt.Fprint(w, r.memoryRead(namespace, key))
+	fmt.Fprintf(w, "%s", r.memoryRead(namespace, key))
 }
 
 func (r *rpcRuleset) httpMemorySave(w http.ResponseWriter, req *http.Request) {
