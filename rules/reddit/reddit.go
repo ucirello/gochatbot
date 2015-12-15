@@ -260,7 +260,7 @@ func New() *redditRuleset {
 }
 
 func subredditURL(subreddit string) (string, error) {
-	u, err := url.Parse(subreddit)
+	u, err := url.Parse(strings.ToLower(subreddit))
 	if err != nil {
 		return "", err
 	}
