@@ -1,0 +1,32 @@
+hash: e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+updated: 2015-12-14T01:43:18.995506378+01:00
+imports:
+- name: github.com/boltdb/bolt
+  version: 6e1ca38c6a73025366cd8705553b404746ee6e63
+  subpackages:
+  - /...
+- name: github.com/gorhill/cronexpr
+  version: a557574d6c024ed6e36acc8b610f5f211c91568a
+- name: github.com/jeffail/gabs
+  version: b69c9e648a2529c8d7b927ba7f87bc7fe0b3b0ea
+- name: github.com/Syfaro/telegram-bot-api
+  version: 6960b6fd7985a30c07edbf810480fe0a2bc1b7dc
+- name: github.com/technoweenie/multipartstreamer
+  version: a90a01d73ae432e2611d178c18367fbaa13e0154
+- name: github.com/thoj/go-ircevent
+  version: db3338ebd4546123dfcde5dfad6057d1d646a42d
+- name: golang.org/x/crypto
+  version: beef0f4390813b96e8e68fd78570396d0f4751fc
+  subpackages:
+  - /ssh/terminal
+- name: golang.org/x/net
+  version: 55cccaa02af1a99c69ba3213e33468628b61be4b
+- name: golang.org/x/text
+  version: e6847002810c51f892a128333573eac5e2a62024
+  subpackages:
+  - /encoding
+- name: gopkg.in/bsm/ratelimit.v1
+  version: fbc2d5a2daac4dc3801ee3073874800e2be6ccd1
+- name: gopkg.in/redis.v3
+  version: 54a9acc11fe8e6aa91905e3c032aa8b4f871bc9b
+devImports: []
