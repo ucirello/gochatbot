@@ -51,7 +51,14 @@ func (r *pluginRuleset) Boot(self *bot.Self) {
 }
 
 func (r pluginRuleset) HelpMessage(self bot.Self) string {
-	return fmt.Sprintln("Loaded plugins:")
+	if len(r.plugins) > 0 {
+		var names []string
+		for _, pluginBin := range r.pluginBins {
+			names = append(names, path.Base(pluginBin))
+		}
+		return fmt.Sprintln("Loaded plugins:", names)
+	}
+	return "no external plugins loaded"
 }
 
 func (r *pluginRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
