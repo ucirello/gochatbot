@@ -24,7 +24,7 @@ type RedditPlugin struct {
 	comm       *plugins.Comm
 	mu         sync.Mutex
 	subreddits map[string][]string
-	recents    map[string]string
+	recents    map[string]map[string]string
 }
 
 func main() {
@@ -35,7 +35,7 @@ func main() {
 	r := &RedditPlugin{
 		comm:       plugins.NewComm(rpcBind),
 		subreddits: make(map[string][]string),
-		recents:    make(map[string]string),
+		recents:    make(map[string]map[string]string),
 	}
 	r.loadMemory()
 	go r.watch()
@@ -235,8 +235,11 @@ func (r *RedditPlugin) readSubreddit(subreddit, room string) {
 
 	var recent string
 	subredditName := strings.TrimSuffix(strings.TrimPrefix(subreddit, baseURL), ".json")
-	if _, ok := r.recents[subredditName]; !ok {
-		r.recents[subredditName] = ""
+	if _, ok := r.recents[room]; !ok {
+		r.recents[room] = make(map[string]string)
+	}
+	if _, ok := r.recents[room][subredditName]; !ok {
+		r.recents[room][subredditName] = ""
 	}
 
 	for _, child := range children {
@@ -247,7 +250,7 @@ func (r *RedditPlugin) readSubreddit(subreddit, room string) {
 			recent = fmt.Sprint(title, url)
 		}
 
-		if fmt.Sprint(title, url) == r.recents[subredditName] {
+		if fmt.Sprint(title, url) == r.recents[room][subredditName] {
 			break
 		}
 
@@ -256,12 +259,12 @@ func (r *RedditPlugin) readSubreddit(subreddit, room string) {
 			Message: fmt.Sprint("/r/", subredditName, ": ", title, " (", url, ")"),
 		})
 
-		if r.recents[subredditName] == "" {
+		if r.recents[room][subredditName] == "" {
 			break
 		}
 	}
 
-	r.recents[subredditName] = recent
+	r.recents[room][subredditName] = recent
 
 	b, err := json.Marshal(r.recents)
 	if err != nil {
