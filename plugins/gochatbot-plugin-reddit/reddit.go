@@ -181,7 +181,7 @@ func (r *RedditPlugin) unfollow(subreddit, room string) string {
 		if sr == url {
 			continue
 		}
-		newRoom = append(newRoom, url)
+		newRoom = append(newRoom, sr)
 	}
 	r.subreddits[room] = newRoom
 
