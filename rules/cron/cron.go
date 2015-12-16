@@ -51,7 +51,7 @@ func (r *cronRuleset) loadMemory(self *bot.Self) {
 	r.start()
 }
 
-func (r cronRuleset) HelpMessage(self bot.Self) string {
+func (r cronRuleset) HelpMessage(self bot.Self, _ string) string {
 	helpMsg := fmt.Sprintln("cron attach <job name>- attach one cron job to a room")
 	helpMsg = fmt.Sprintln(helpMsg, "cron detach <job name> - detach one cron job from a room")
 	helpMsg = fmt.Sprintln(helpMsg, "cron list - list all available crons")

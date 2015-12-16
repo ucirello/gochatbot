@@ -42,7 +42,7 @@ func (r *rpcRuleset) Boot(self *bot.Self) {
 	go http.Serve(r.listener, r.mux)
 }
 
-func (r rpcRuleset) HelpMessage(self bot.Self) string {
+func (r rpcRuleset) HelpMessage(self bot.Self, _ string) string {
 	return fmt.Sprintln("RPC listens to", r.listener.Addr(), "for RPC calls")
 }
 

@@ -52,7 +52,7 @@ func (s *Self) Process() {
 				go func(self Self, msg messages.Message) {
 					helpMsg := fmt.Sprintln("available commands:")
 					for _, rule := range s.rules {
-						helpMsg = fmt.Sprintln(helpMsg, rule.HelpMessage(self))
+						helpMsg = fmt.Sprintln(helpMsg, rule.HelpMessage(self, in.Room))
 					}
 					s.providerOut <- messages.Message{
 						Room:       msg.Room,

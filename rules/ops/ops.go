@@ -47,7 +47,7 @@ func (r *opsRuleset) Boot(self *bot.Self) {
 	}
 }
 
-func (r opsRuleset) HelpMessage(self bot.Self) string {
+func (r opsRuleset) HelpMessage(self bot.Self, _ string) string {
 	botName := self.Name()
 	msg := fmt.Sprintln(botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
 	msg = fmt.Sprintln(msg, botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")

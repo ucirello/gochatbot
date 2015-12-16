@@ -32,7 +32,7 @@ func (r regexRuleset) Name() string {
 func (r regexRuleset) Boot(_ *bot.Self) {
 }
 
-func (r regexRuleset) HelpMessage(self bot.Self) string {
+func (r regexRuleset) HelpMessage(self bot.Self, _ string) string {
 	botName := self.Name()
 	var helpMsg string
 	for _, rule := range r.rules {

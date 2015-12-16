@@ -1,4 +1,4 @@
-package reddit // import "cirello.io/gochatbot/rules/reddit"
+package main // import "cirello.io/gochatbot/plugins/gochatbot-plugin-reddit"
 
 import (
 	"encoding/json"
@@ -7,56 +7,74 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/jeffail/gabs"
 
-	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/messages"
+	"cirello.io/gochatbot/plugins"
 )
 
-// Golang/.json
 const baseURL = "https://www.reddit.com/r/"
 
-type redditRuleset struct {
-	outCh chan messages.Message
-
+type RedditPlugin struct {
+	comm       *plugins.Comm
 	mu         sync.Mutex
 	subreddits map[string][]string
 	recents    map[string]string
-
-	memoryRead func(string, string) []byte
-	memorySave func(string, string, []byte)
 }
 
-// Name returns this rules name - meant for debugging.
-func (r *redditRuleset) Name() string {
-	return "Reddit Ruleset"
-}
-
-// Boot runs preparatory steps for ruleset execution
-func (r *redditRuleset) Boot(self *bot.Self) {
-	r.outCh = self.MessageProviderOut()
-	r.memoryRead = self.MemoryRead
-	r.memorySave = self.MemorySave
+func main() {
+	rpcBind := os.Getenv("GOCHATBOT_RPC_BIND")
+	if rpcBind == "" {
+		log.Fatal("GOCHATBOT_RPC_BIND empty or not set. Cannot start plugin.")
+	}
+	r := &RedditPlugin{
+		comm:       plugins.NewComm(rpcBind),
+		subreddits: make(map[string][]string),
+		recents:    make(map[string]string),
+	}
 	r.loadMemory()
+	go r.watch()
+	for {
+		in, err := r.comm.Pop()
+		if err != nil {
+			log.Println("reddit: error popping message from gochatbot:", err)
+		}
+		if in.Message == "" {
+			time.Sleep(1 * time.Second)
+		}
+		if err := r.parseMessage(in); err != nil {
+			log.Println("reddit: error parsing message:", err)
+		}
+	}
 }
 
-func (r *redditRuleset) loadMemory() {
+func (r *RedditPlugin) loadMemory() {
 	log.Println("reddit: reading from memory")
-	if err := json.Unmarshal(r.memoryRead("reddit", "follow"), &r.subreddits); err == nil {
+	followMem, err := r.comm.MemoryRead("reddit", "follow")
+	if err != nil {
+		log.Println("reddit: error memory (follow) read:", err)
+		return
+	}
+	if err := json.Unmarshal(followMem, &r.subreddits); err == nil {
 		log.Println("reddit: memory (follow) read")
 	}
 
-	if err := json.Unmarshal(r.memoryRead("reddit", "recents"), &r.recents); err == nil {
+	recentsMem, err := r.comm.MemoryRead("reddit", "recents")
+	if err != nil {
+		log.Println("reddit: error memory (recent) read:", err)
+		return
+	}
+	if err := json.Unmarshal(recentsMem, &r.recents); err == nil {
 		log.Println("reddit: memory (recent) read")
 	}
-	go r.start()
 }
 
-func (r redditRuleset) HelpMessage(self bot.Self) string {
+func (r RedditPlugin) helpMessage() string {
 	helpMsg := fmt.Sprintln("reddit follow <subreddit>- follow one subreddit in a room")
 	helpMsg = fmt.Sprintln(helpMsg, "reddit unfollow <subreddit> - unfollow one subreddit in a room")
 	helpMsg = fmt.Sprintln(helpMsg, "reddit list - list the followed subreddits in a room")
@@ -65,53 +83,55 @@ func (r redditRuleset) HelpMessage(self bot.Self) string {
 	return helpMsg
 }
 
-func (r *redditRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
+func (r *RedditPlugin) parseMessage(in *messages.Message) error {
+	if in.Message == "help" || in.Message == "reddit help" {
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.helpMessage(),
+		})
+	}
 	if strings.HasPrefix(in.Message, "reddit follow") {
 		subreddit := strings.TrimSpace(strings.TrimPrefix(in.Message, "reddit follow"))
-		ret := []messages.Message{
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    r.follow(subreddit, in.Room),
-			},
-		}
-		return ret
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.follow(subreddit, in.Room),
+		})
 	}
 
 	if strings.HasPrefix(in.Message, "reddit unfollow") {
 		subreddit := strings.TrimSpace(strings.TrimPrefix(in.Message, "reddit unfollow"))
-		return []messages.Message{
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    r.unfollow(subreddit, in.Room),
-			},
-		}
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.unfollow(subreddit, in.Room),
+		})
 	}
 
 	if strings.HasPrefix(in.Message, "reddit list") {
-		return []messages.Message{
-			{
-				Room:       in.Room,
-				ToUserID:   in.FromUserID,
-				ToUserName: in.FromUserName,
-				Message:    r.list(in.Room),
-			},
-		}
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.list(in.Room),
+		})
 	}
-	return []messages.Message{}
+
+	return nil
 }
 
-func (r *redditRuleset) list(room string) string {
+func (r *RedditPlugin) list(room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
 	return fmt.Sprintln("followed subreddits in this room:", r.subreddits[room])
 }
 
-func (r *redditRuleset) follow(subreddit, room string) string {
+func (r *RedditPlugin) follow(subreddit, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -136,11 +156,11 @@ func (r *redditRuleset) follow(subreddit, room string) string {
 	if err != nil {
 		return "could not follow " + subreddit
 	}
-	r.memorySave("reddit", "follow", b)
+	r.comm.MemorySave("reddit", "follow", b)
 	return subredditURL + " followed in this room"
 }
 
-func (r *redditRuleset) unfollow(subreddit, room string) string {
+func (r *RedditPlugin) unfollow(subreddit, room string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -169,12 +189,12 @@ func (r *redditRuleset) unfollow(subreddit, room string) string {
 	if err != nil {
 		return "could not unfollow " + subreddit
 	}
-	r.memorySave("reddit", "follow", b)
+	r.comm.MemorySave("reddit", "follow", b)
 
 	return subreddit + " not followed in this room anymore"
 }
 
-func (r *redditRuleset) start() {
+func (r *RedditPlugin) watch() {
 	c := time.Tick(30 * time.Second)
 	for range c {
 		r.mu.Lock()
@@ -187,7 +207,7 @@ func (r *redditRuleset) start() {
 	}
 }
 
-func (r *redditRuleset) readSubreddit(subreddit, room string) {
+func (r *RedditPlugin) readSubreddit(subreddit, room string) {
 	resp, err := http.Get(subreddit + ".json")
 	if err != nil {
 		log.Printf("redit: error loading subreddit %s. got: %v", subreddit, err)
@@ -231,10 +251,10 @@ func (r *redditRuleset) readSubreddit(subreddit, room string) {
 			break
 		}
 
-		r.outCh <- messages.Message{
+		r.comm.Send(&messages.Message{
 			Room:    room,
 			Message: fmt.Sprint("/r/", subredditName, ": ", title, " (", url, ")"),
-		}
+		})
 
 		if r.recents[subredditName] == "" {
 			break
@@ -247,16 +267,7 @@ func (r *redditRuleset) readSubreddit(subreddit, room string) {
 	if err != nil {
 		log.Printf("redit: error serializing subreddit json. got: %v", err)
 	}
-	r.memorySave("reddit", "recents", b)
-}
-
-// New returns a reddit rule set
-func New() *redditRuleset {
-	r := &redditRuleset{
-		subreddits: make(map[string][]string),
-		recents:    make(map[string]string),
-	}
-	return r
+	r.comm.MemorySave("reddit", "recents", b)
 }
 
 func subredditURL(subreddit string) (string, error) {
