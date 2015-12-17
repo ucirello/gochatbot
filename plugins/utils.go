@@ -20,9 +20,15 @@ func NewComm(rpcAddr string) *Comm {
 }
 
 func (p Comm) Pop() (*messages.Message, error) {
-	resp, err := http.Get(fmt.Sprint("http://", p.rpcAddr, "/pop"))
+	req, err := http.NewRequest("GET", fmt.Sprint("http://", p.rpcAddr, "/pop"), nil)
 	if err != nil {
-		return nil, fmt.Errorf("error talking to gochatbot: %v", err)
+		return nil, fmt.Errorf("error creating request (pop): %v", err)
+	}
+
+	req.Close = true
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("error talking to gochatbot (pop): %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -40,9 +46,14 @@ func (p Comm) Send(msg *messages.Message) error {
 		return fmt.Errorf("error serializing message to gochatbot: %v", err)
 	}
 
-	resp, err := http.Post(fmt.Sprint("http://", p.rpcAddr, "/send"), "application/json", &buf)
+	req, err := http.NewRequest("POST", fmt.Sprint("http://", p.rpcAddr, "/send"), &buf)
 	if err != nil {
-		return fmt.Errorf("error talking to gochatbot: %v", err)
+		return nil, fmt.Errorf("error creating request (send): %v", err)
+	}
+	req.Close = true
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("error talking to gochatbot (send): %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -50,11 +61,19 @@ func (p Comm) Send(msg *messages.Message) error {
 }
 
 func (p Comm) MemoryRead(ns, key string) ([]byte, error) {
-	resp, err := http.Get(
+	req, err := http.NewRequest(
+		"GET",
 		fmt.Sprintf("http://%s/memoryRead?namespace=%s&key=%s", p.rpcAddr, url.QueryEscape(ns), url.QueryEscape(key)),
+		nil,
 	)
 	if err != nil {
-		return []byte{}, fmt.Errorf("error talking to gochatbot %v", err)
+		return nil, fmt.Errorf("error creating request (memory read): %v", err)
+	}
+
+	req.Close = true
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return []byte{}, fmt.Errorf("error talking to gochatbot (memory read): %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -68,15 +87,21 @@ func (p Comm) MemoryRead(ns, key string) ([]byte, error) {
 
 func (p Comm) MemorySave(ns, key string, content []byte) error {
 	buf := bytes.NewReader(content)
-	resp, err := http.Post(
+	req, err := http.NewRequest(
+		"GET",
 		fmt.Sprintf("http://%s/memorySave?namespace=%s&key=%s", p.rpcAddr, url.QueryEscape(ns), url.QueryEscape(key)),
-		"application/octet-stream",
 		buf,
 	)
+	if err != nil {
+		return nil, fmt.Errorf("error creating request (memory read): %v", err)
+	}
+
+	req.Close = true
+	resp, err := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
 
 	if err != nil {
-		return fmt.Errorf("error talking to gochatbot: %v", err)
+		return fmt.Errorf("error talking to gochatbot (memory save): %v", err)
 	}
 
 	return nil
