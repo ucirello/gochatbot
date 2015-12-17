@@ -48,7 +48,7 @@ func (p Comm) Send(msg *messages.Message) error {
 
 	req, err := http.NewRequest("POST", fmt.Sprint("http://", p.rpcAddr, "/send"), &buf)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request (send): %v", err)
+		return fmt.Errorf("error creating request (send): %v", err)
 	}
 	req.Close = true
 	resp, err := http.DefaultClient.Do(req)
@@ -93,7 +93,7 @@ func (p Comm) MemorySave(ns, key string, content []byte) error {
 		buf,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("error creating request (memory read): %v", err)
+		return fmt.Errorf("error creating request (memory save): %v", err)
 	}
 
 	req.Close = true
