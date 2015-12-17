@@ -43,6 +43,7 @@ func main() {
 		in, err := r.comm.Pop()
 		if err != nil {
 			log.Println("reddit: error popping message from gochatbot:", err)
+			continue
 		}
 		if in.Message == "" {
 			time.Sleep(1 * time.Second)
