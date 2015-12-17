@@ -40,9 +40,11 @@ func (p Comm) Send(msg *messages.Message) error {
 		return fmt.Errorf("error serializing message to gochatbot: %v", err)
 	}
 
-	if _, err := http.Post(fmt.Sprint("http://", p.rpcAddr, "/send"), "application/json", &buf); err != nil {
+	resp, err := http.Post(fmt.Sprint("http://", p.rpcAddr, "/send"), "application/json", &buf)
+	if err != nil {
 		return fmt.Errorf("error talking to gochatbot: %v", err)
 	}
+	defer resp.Body.Close()
 
 	return nil
 }
@@ -66,11 +68,14 @@ func (p Comm) MemoryRead(ns, key string) ([]byte, error) {
 
 func (p Comm) MemorySave(ns, key string, content []byte) error {
 	buf := bytes.NewReader(content)
-	if _, err := http.Post(
+	resp, err := http.Post(
 		fmt.Sprintf("http://%s/memorySave?namespace=%s&key=%s", p.rpcAddr, url.QueryEscape(ns), url.QueryEscape(key)),
 		"application/octet-stream",
 		buf,
-	); err != nil {
+	)
+	defer resp.Body.Close()
+
+	if err != nil {
 		return fmt.Errorf("error talking to gochatbot: %v", err)
 	}
 

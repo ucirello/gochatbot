@@ -13,6 +13,7 @@ import (
 func (r *rpcRuleset) httpPop(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	defer req.Body.Close()
 
 	var msg messages.Message
 	if len(r.inbox) > 1 {
@@ -49,6 +50,7 @@ func (r *rpcRuleset) httpSend(w http.ResponseWriter, req *http.Request) {
 func (r *rpcRuleset) httpMemoryRead(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	defer req.Body.Close()
 
 	namespace := req.URL.Query().Get("namespace")
 	key := req.URL.Query().Get("key")
