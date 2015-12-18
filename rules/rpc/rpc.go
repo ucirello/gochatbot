@@ -39,7 +39,9 @@ func (r *rpcRuleset) Boot(self *bot.Self) {
 	r.mux.HandleFunc("/memoryRead", r.httpMemoryRead)
 	r.mux.HandleFunc("/memorySave", r.httpMemorySave)
 	log.Println("rpc: listening", r.listener.Addr())
-	go http.Serve(r.listener, r.mux)
+	srv := &http.Server{Handler: r.mux}
+	srv.SetKeepAlivesEnabled(false)
+	go srv.Serve(r.listener)
 }
 
 func (r rpcRuleset) HelpMessage(self bot.Self, _ string) string {

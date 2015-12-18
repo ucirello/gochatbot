@@ -14,7 +14,6 @@ func (r *rpcRuleset) httpPop(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	defer req.Body.Close()
-	req.Close = true
 
 	var msg messages.Message
 	if len(r.inbox) > 1 {
@@ -35,7 +34,6 @@ func (r *rpcRuleset) httpPop(w http.ResponseWriter, req *http.Request) {
 func (r *rpcRuleset) httpSend(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	req.Close = true
 
 	var msg messages.Message
 	if err := json.NewDecoder(req.Body).Decode(&msg); err != nil {
@@ -53,7 +51,6 @@ func (r *rpcRuleset) httpMemoryRead(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	defer req.Body.Close()
-	req.Close = true
 
 	namespace := req.URL.Query().Get("namespace")
 	key := req.URL.Query().Get("key")
@@ -65,7 +62,6 @@ func (r *rpcRuleset) httpMemorySave(w http.ResponseWriter, req *http.Request) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 	defer req.Body.Close()
-	req.Close = true
 
 	namespace := req.URL.Query().Get("namespace")
 	key := req.URL.Query().Get("key")

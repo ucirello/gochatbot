@@ -20,13 +20,7 @@ func NewComm(rpcAddr string) *Comm {
 }
 
 func (p Comm) Pop() (*messages.Message, error) {
-	req, err := http.NewRequest("GET", fmt.Sprint("http://", p.rpcAddr, "/pop"), nil)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request (pop): %v", err)
-	}
-
-	req.Close = true
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Get(fmt.Sprint("http://", p.rpcAddr, "/pop"))
 	if err != nil {
 		return nil, fmt.Errorf("error talking to gochatbot (pop): %v", err)
 	}
@@ -46,12 +40,7 @@ func (p Comm) Send(msg *messages.Message) error {
 		return fmt.Errorf("error serializing message to gochatbot: %v", err)
 	}
 
-	req, err := http.NewRequest("POST", fmt.Sprint("http://", p.rpcAddr, "/send"), &buf)
-	if err != nil {
-		return fmt.Errorf("error creating request (send): %v", err)
-	}
-	req.Close = true
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := http.Post(fmt.Sprint("http://", p.rpcAddr, "/send"), "application/octet-stream", &buf)
 	if err != nil {
 		return fmt.Errorf("error talking to gochatbot (send): %v", err)
 	}
@@ -61,17 +50,9 @@ func (p Comm) Send(msg *messages.Message) error {
 }
 
 func (p Comm) MemoryRead(ns, key string) ([]byte, error) {
-	req, err := http.NewRequest(
-		"GET",
+	resp, err := http.Get(
 		fmt.Sprintf("http://%s/memoryRead?namespace=%s&key=%s", p.rpcAddr, url.QueryEscape(ns), url.QueryEscape(key)),
-		nil,
 	)
-	if err != nil {
-		return nil, fmt.Errorf("error creating request (memory read): %v", err)
-	}
-
-	req.Close = true
-	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return []byte{}, fmt.Errorf("error talking to gochatbot (memory read): %v", err)
 	}
@@ -87,17 +68,11 @@ func (p Comm) MemoryRead(ns, key string) ([]byte, error) {
 
 func (p Comm) MemorySave(ns, key string, content []byte) error {
 	buf := bytes.NewReader(content)
-	req, err := http.NewRequest(
-		"GET",
+	resp, err := http.Post(
 		fmt.Sprintf("http://%s/memorySave?namespace=%s&key=%s", p.rpcAddr, url.QueryEscape(ns), url.QueryEscape(key)),
+		"application/octet-stream",
 		buf,
 	)
-	if err != nil {
-		return fmt.Errorf("error creating request (memory save): %v", err)
-	}
-
-	req.Close = true
-	resp, err := http.DefaultClient.Do(req)
 	defer resp.Body.Close()
 
 	if err != nil {
