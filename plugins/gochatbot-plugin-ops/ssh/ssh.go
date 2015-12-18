@@ -1,4 +1,4 @@
-package ssh // import "cirello.io/gochatbot/rules/ops/ssh"
+package ssh // import "cirello.io/gochatbot/plugins/gochatbot-plugin-ops/ssh"
 
 import (
 	"fmt"

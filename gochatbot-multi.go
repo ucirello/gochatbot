@@ -15,7 +15,6 @@ import (
 	"cirello.io/gochatbot/brain"
 	"cirello.io/gochatbot/providers"
 	"cirello.io/gochatbot/rules/cron"
-	"cirello.io/gochatbot/rules/ops"
 	"cirello.io/gochatbot/rules/plugins"
 	"cirello.io/gochatbot/rules/regex"
 	"cirello.io/gochatbot/rules/rpc"
@@ -58,7 +57,6 @@ func main() {
 				bot.MessageProvider(provider),
 				bot.RegisterRuleset(regex.New(regexRules)),
 				bot.RegisterRuleset(cron.New(cronRules)),
-				bot.RegisterRuleset(ops.New(opsCmds)),
 				bot.RegisterRuleset(plugins.New(wd)),
 			}
 

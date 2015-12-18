@@ -1,4 +1,4 @@
-package ops // import "cirello.io/gochatbot/rules/ops"
+package main // import "cirello.io/gochatbot/plugins/gochatbot-plugin-ops"
 
 import (
 	"encoding/json"
@@ -8,10 +8,11 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
-	"cirello.io/gochatbot/bot"
 	"cirello.io/gochatbot/messages"
-	"cirello.io/gochatbot/rules/ops/ssh"
+	"cirello.io/gochatbot/plugins"
+	"cirello.io/gochatbot/plugins/gochatbot-plugin-ops/ssh"
 )
 
 type sshConf struct {
@@ -19,70 +20,113 @@ type sshConf struct {
 	SSHKeyFile string
 }
 
-type opsRuleset struct {
-	cmds  map[string]string
-	outCh chan messages.Message
+type OpsPlugin struct {
+	comm    *plugins.Comm
+	botName string
+
+	cmds map[string]string
 
 	mu             sync.Mutex
 	hostGroups     map[string][]string
 	hostGroupsConf map[string]sshConf
 }
 
-// Name returns this rules name - meant for debugging.
-func (r opsRuleset) Name() string {
-	return "Remote Ops Ruleset"
-}
+func main() {
+	rpcBind := os.Getenv("GOCHATBOT_RPC_BIND")
+	if rpcBind == "" {
+		log.Fatal("GOCHATBOT_RPC_BIND empty or not set. Cannot start plugin.")
+	}
+	botName := os.Getenv("GOCHATBOT_NAME")
+	if botName == "" {
+		log.Fatal("GOCHATBOT_NAME empty or not set. Cannot start plugin.")
+	}
 
-// Boot runs preparatory steps for ruleset execution
-func (r *opsRuleset) Boot(self *bot.Self) {
-	r.outCh = self.MessageProviderOut()
+	r := &OpsPlugin{
+		comm:    plugins.NewComm(rpcBind),
+		botName: botName,
+
+		cmds: allowedCmds,
+
+		hostGroups:     make(map[string][]string),
+		hostGroupsConf: make(map[string]sshConf),
+	}
 
 	log.Println("ops: reading from memory")
-	if err := json.Unmarshal(self.MemoryRead("ops", "hostGroups"), &r.hostGroups); err == nil {
+	memHG, err := r.comm.MemoryRead("ops", "hostGroups")
+	if err != nil {
+		log.Println("ops: error reading hostGroups from Bots memory")
+	}
+	if err := json.Unmarshal(memHG, &r.hostGroups); err == nil {
 		log.Println("ops: hostGroups read")
 	}
 
-	if err := json.Unmarshal(self.MemoryRead("ops", "hostGroupsConf"), &r.hostGroupsConf); err == nil {
+	memHGC, err := r.comm.MemoryRead("ops", "hostGroupsConf")
+	if err != nil {
+		log.Println("ops: error reading hostGroupsConf from Bots memory")
+	}
+	if err := json.Unmarshal(memHGC, &r.hostGroupsConf); err == nil {
 		log.Println("ops: hostGroupsConf read")
+	}
+
+	for {
+		in, err := r.comm.Pop()
+		if err != nil {
+			log.Println("ops: error popping message from gochatbot:", err)
+			continue
+		}
+		if in.Message == "" {
+			time.Sleep(1 * time.Second)
+		}
+		if err := r.parseMessage(in); err != nil {
+			log.Println("ops: error parsing message:", err)
+		}
 	}
 }
 
-func (r opsRuleset) HelpMessage(self bot.Self, _ string) string {
-	botName := self.Name()
-	msg := fmt.Sprintln(botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
-	msg = fmt.Sprintln(msg, botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")
-	msg = fmt.Sprintln(msg, botName, "ops configure hostgroup username keyfile - configure ssh login credentials (don't provide keyfile to force the use of ssh-agent)")
+func (r OpsPlugin) helpMessage() string {
+	msg := fmt.Sprintln(r.botName, "ops add host host-group - add host to host-group (the group is created at first host addition)")
+	msg = fmt.Sprintln(msg, r.botName, "ops remove host host-group - remove host from host-group (the group is removed after last host deletion)")
+	msg = fmt.Sprintln(msg, r.botName, "ops configure hostgroup username keyfile - configure ssh login credentials (don't provide keyfile to force the use of ssh-agent)")
 
 	for cmd, desc := range r.cmds {
-		msg = fmt.Sprintln(msg, botName, "ops", cmd, "-", desc)
+		msg = fmt.Sprintln(msg, r.botName, "ops", cmd, "-", desc)
 	}
 	return msg
 }
 
-func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	cmd := strings.TrimSpace(strings.TrimPrefix(in.Message, self.Name()))
+func (r OpsPlugin) parseMessage(in *messages.Message) error {
+	if in.Message == "help" || in.Message == "ops help" {
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.helpMessage(),
+		})
+	}
+
+	cmd := strings.TrimSpace(strings.TrimPrefix(in.Message, r.botName))
 	parts := strings.Split(cmd, " ")
 
-	var msg messages.Message
+	var msg *messages.Message
 	if strings.HasPrefix(cmd, "ops add") {
 		host, hostGroup := parts[2], parts[3]
-		msg = messages.Message{
+		msg = &messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
-			Message:      r.add(self, host, hostGroup),
+			Message:      r.add(host, hostGroup),
 		}
 	} else if strings.HasPrefix(cmd, "ops remove") {
 		host, hostGroup := parts[2], parts[3]
-		msg = messages.Message{
+		msg = &messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
-			Message:      r.remove(self, host, hostGroup),
+			Message:      r.remove(host, hostGroup),
 		}
 	} else if strings.HasPrefix(cmd, "ops configure") {
 		var sshKeyFile string
@@ -90,21 +134,21 @@ func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.
 		if len(parts) == 5 {
 			sshKeyFile = parts[4]
 		}
-		msg = messages.Message{
+		msg = &messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
-			Message:      r.configure(self, hostGroup, username, sshKeyFile),
+			Message:      r.configure(hostGroup, username, sshKeyFile),
 		}
 	} else {
-		msg = messages.Message{}
+		msg = &messages.Message{}
 		for allowedCmd, _ := range r.cmds {
 			if strings.HasPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))) {
 				hostGroup := strings.TrimSpace(strings.TrimPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))))
 				go r.run(in, hostGroup, allowedCmd)
-				msg = messages.Message{
+				msg = &messages.Message{
 					Room:         in.Room,
 					FromUserID:   in.ToUserID,
 					FromUserName: in.ToUserName,
@@ -116,10 +160,10 @@ func (r opsRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.
 		}
 	}
 
-	return []messages.Message{msg}
+	return r.comm.Send(msg)
 }
 
-func (r *opsRuleset) add(self bot.Self, host, hostGroup string) string {
+func (r *OpsPlugin) add(host, hostGroup string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -129,12 +173,12 @@ func (r *opsRuleset) add(self bot.Self, host, hostGroup string) string {
 	if err != nil {
 		return fmt.Sprintf("error adding host to host group. got:", err)
 	}
-	self.MemorySave("ops", "hostGroups", b)
+	r.comm.MemorySave("ops", "hostGroups", b)
 
 	return fmt.Sprintln(host, "added to host group", hostGroup)
 }
 
-func (r *opsRuleset) remove(self bot.Self, host, hostGroup string) string {
+func (r *OpsPlugin) remove(host, hostGroup string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -155,12 +199,12 @@ func (r *opsRuleset) remove(self bot.Self, host, hostGroup string) string {
 	if err != nil {
 		return fmt.Sprintf("error removing host from host group. got: %v", err)
 	}
-	self.MemorySave("ops", "hostGroups", b)
+	r.comm.MemorySave("ops", "hostGroups", b)
 
 	return fmt.Sprintln(host, "removed from host group", hostGroup)
 }
 
-func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile string) string {
+func (r *OpsPlugin) configure(hostGroup, username, sshKeyFile string) string {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
@@ -173,32 +217,32 @@ func (r *opsRuleset) configure(self bot.Self, hostGroup, username, sshKeyFile st
 	if err != nil {
 		return fmt.Sprintf("error configuring host group. got: %v", err)
 	}
-	self.MemorySave("ops", "hostGroupsConf", b)
+	r.comm.MemorySave("ops", "hostGroupsConf", b)
 
 	return fmt.Sprintln(hostGroup, "configured")
 }
 
-func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
+func (r *OpsPlugin) run(in *messages.Message, hostGroup, cmd string) {
 	if _, ok := r.hostGroups[hostGroup]; !ok {
-		r.outCh <- messages.Message{
+		r.comm.Send(&messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
 			Message:      fmt.Sprintln("could not find hostgroup", hostGroup),
-		}
+		})
 		return
 	}
 	if _, ok := r.hostGroupsConf[hostGroup]; !ok {
-		r.outCh <- messages.Message{
+		r.comm.Send(&messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
 			Message:      fmt.Sprintln("could not find configuration for hostgroup", hostGroup),
-		}
+		})
 		return
 	}
 
@@ -208,14 +252,14 @@ func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
 		go func(conf sshConf, hostname string) {
 			host, port, err := net.SplitHostPort(hostname)
 			if err != nil {
-				r.outCh <- messages.Message{
+				r.comm.Send(&messages.Message{
 					Room:         in.Room,
 					FromUserID:   in.ToUserID,
 					FromUserName: in.ToUserName,
 					ToUserID:     in.FromUserID,
 					ToUserName:   in.FromUserName,
 					Message:      err.Error(),
-				}
+				})
 				return
 			}
 			authMethod := ssh.PublicKeyFile(conf.SSHKeyFile)
@@ -231,34 +275,24 @@ func (r *opsRuleset) run(in messages.Message, hostGroup, cmd string) {
 				authMethod,
 			)
 			if err != nil {
-				r.outCh <- messages.Message{
+				r.comm.Send(&messages.Message{
 					Room:         in.Room,
 					FromUserID:   in.ToUserID,
 					FromUserName: in.ToUserName,
 					ToUserID:     in.FromUserID,
 					ToUserName:   in.FromUserName,
 					Message:      err.Error(),
-				}
+				})
 				return
 			}
-			r.outCh <- messages.Message{
+			r.comm.Send(&messages.Message{
 				Room:         in.Room,
 				FromUserID:   in.ToUserID,
 				FromUserName: in.ToUserName,
 				ToUserID:     in.FromUserID,
 				ToUserName:   in.FromUserName,
 				Message:      fmt.Sprintf("%s: %s", hostname, out),
-			}
+			})
 		}(conf, hostname)
-	}
-}
-
-// New returns a ops ruleset
-func New(cmds map[string]string) *opsRuleset {
-	return &opsRuleset{
-		cmds: cmds,
-
-		hostGroups:     make(map[string][]string),
-		hostGroupsConf: make(map[string]sshConf),
 	}
 }
