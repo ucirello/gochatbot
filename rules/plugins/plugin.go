@@ -39,6 +39,7 @@ func (r *pluginRuleset) Boot(self *bot.Self) {
 		cmd := exec.Command(pluginBin)
 		cmd.Env = os.Environ()
 		cmd.Env = append(cmd.Env, fmt.Sprintf("GOCHATBOT_RPC_BIND=%s", l.Addr()))
+		cmd.Env = append(cmd.Env, fmt.Sprintf("GOCHATBOT_NAME=%s", self.Name()))
 		cmd.Stderr = os.Stderr
 		if err := cmd.Start(); err != nil {
 			log.Printf("plugin: %s - error: %v", pluginBin, err)
