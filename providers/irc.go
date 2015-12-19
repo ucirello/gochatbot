@@ -125,6 +125,10 @@ func (p *providerIRC) dispatchLoop() {
 		var finalMsg bytes.Buffer
 		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{msg.ToUserName})
 
+		if strings.TrimSpace(finalMsg.String()) == "" {
+			continue
+		}
+
 		msgs := strings.Split(finalMsg.String(), "\n")
 		for _, m := range msgs {
 			p.ircConn.Privmsg(channel, m)
