@@ -157,7 +157,6 @@ func (p *providerSlack) dispatchLoop() {
 		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
 
 		if strings.TrimSpace(finalMsg.String()) == "" {
-			fmt.Print(".")
 			continue
 		}
 
