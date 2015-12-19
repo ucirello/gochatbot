@@ -156,6 +156,11 @@ func (p *providerSlack) dispatchLoop() {
 		var finalMsg bytes.Buffer
 		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"<@" + msg.ToUserID + ">"})
 
+		if strings.TrimSpace(finalMsg.String()) == "" {
+			fmt.Print(".")
+			continue
+		}
+
 		data := struct {
 			Type    string `json:"type"`
 			User    string `json:"user"`
