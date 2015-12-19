@@ -107,60 +107,58 @@ func (r OpsPlugin) parseMessage(in *messages.Message) error {
 	cmd := strings.TrimSpace(strings.TrimPrefix(in.Message, r.botName))
 	parts := strings.Split(cmd, " ")
 
-	var msg *messages.Message
 	if strings.HasPrefix(cmd, "ops add") {
 		host, hostGroup := parts[2], parts[3]
-		msg = &messages.Message{
+		return r.comm.Send(&messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
 			Message:      r.add(host, hostGroup),
-		}
+		})
 	} else if strings.HasPrefix(cmd, "ops remove") {
 		host, hostGroup := parts[2], parts[3]
-		msg = &messages.Message{
+		return r.comm.Send(&messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
 			Message:      r.remove(host, hostGroup),
-		}
+		})
 	} else if strings.HasPrefix(cmd, "ops configure") {
 		var sshKeyFile string
 		hostGroup, username := parts[2], parts[3]
 		if len(parts) == 5 {
 			sshKeyFile = parts[4]
 		}
-		msg = &messages.Message{
+		return r.comm.Send(&messages.Message{
 			Room:         in.Room,
 			FromUserID:   in.ToUserID,
 			FromUserName: in.ToUserName,
 			ToUserID:     in.FromUserID,
 			ToUserName:   in.FromUserName,
 			Message:      r.configure(hostGroup, username, sshKeyFile),
-		}
+		})
 	} else {
-		msg = &messages.Message{}
 		for allowedCmd, _ := range r.cmds {
 			if strings.HasPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))) {
 				hostGroup := strings.TrimSpace(strings.TrimPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))))
 				go r.run(in, hostGroup, allowedCmd)
-				msg = &messages.Message{
+				return r.comm.Send(&messages.Message{
 					Room:         in.Room,
 					FromUserID:   in.ToUserID,
 					FromUserName: in.ToUserName,
 					ToUserID:     in.FromUserID,
 					ToUserName:   in.FromUserName,
 					Message:      fmt.Sprintf("dispatched '%s' call to %s", allowedCmd, hostGroup),
-				}
+				})
 			}
 		}
 	}
 
-	return r.comm.Send(msg)
+	return nil
 }
 
 func (r *OpsPlugin) add(host, hostGroup string) string {
