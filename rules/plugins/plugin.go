@@ -67,12 +67,10 @@ func (r pluginRuleset) HelpMessage(self bot.Self, room string) string {
 }
 
 func (r *pluginRuleset) ParseMessage(self bot.Self, in messages.Message) []messages.Message {
-	var ret []messages.Message
 	for _, plugin := range r.plugins {
-		msgs := plugin.ParseMessage(self, in)
-		ret = append(ret, msgs...)
+		go plugin.ParseMessage(self, in)
 	}
-	return ret
+	return []messages.Message{}
 }
 
 func (p *pluginRuleset) detectPluginBinaries(workdir string) error {
