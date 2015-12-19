@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"log"
 	"strconv"
+	"strings"
 	"text/template"
 	"time"
 
@@ -113,6 +114,11 @@ func (p *providerTelegram) dispatchLoop() {
 		}
 		var finalMsg bytes.Buffer
 		template.Must(template.New("tmpl").Parse(msg.Message)).Execute(&finalMsg, struct{ User string }{"@" + msg.ToUserName})
+
+		if strings.TrimSpace(finalMsg.String()) == "" {
+			continue
+		}
+
 		p.tg.Send(tgbotapi.NewMessage(id, finalMsg.String()))
 		time.Sleep(1 * time.Second)
 	}
