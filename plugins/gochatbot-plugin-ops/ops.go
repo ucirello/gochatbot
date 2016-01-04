@@ -142,7 +142,7 @@ func (r OpsPlugin) parseMessage(in *messages.Message) error {
 			Message:      r.configure(hostGroup, username, sshKeyFile),
 		})
 	} else {
-		for allowedCmd, _ := range r.cmds {
+		for allowedCmd := range r.cmds {
 			if strings.HasPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))) {
 				hostGroup := strings.TrimSpace(strings.TrimPrefix(cmd, strings.TrimSpace(fmt.Sprintln("ops", allowedCmd))))
 				go r.run(in, hostGroup, allowedCmd)
