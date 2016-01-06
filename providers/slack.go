@@ -10,7 +10,9 @@ import (
 	"html/template"
 	"log"
 	"net/http"
+	"net/url"
 	"strings"
+	"sync"
 	"time"
 
 	"golang.org/x/net/websocket"
@@ -43,14 +45,18 @@ type providerSlack struct {
 	in  chan messages.Message
 	out chan messages.Message
 	err error
+
+	mu        sync.Mutex
+	usernames map[string]string
 }
 
 // Slack is the message provider meant to be used in development of rule sets.
 func Slack(token string) *providerSlack {
 	slack := &providerSlack{
-		token: token,
-		in:    make(chan messages.Message),
-		out:   make(chan messages.Message),
+		token:     token,
+		in:        make(chan messages.Message),
+		out:       make(chan messages.Message),
+		usernames: make(map[string]string),
 	}
 	slack.handshake()
 	slack.dial()
@@ -140,13 +146,49 @@ func (p *providerSlack) intakeLoop() {
 		}
 
 		msg := messages.Message{
-			Room:       data.Channel,
-			FromUserID: data.UserID,
-			Message:    data.Text,
-			Direct:     strings.HasPrefix(data.Channel, "D"),
+			Room:         data.Channel,
+			FromUserID:   data.UserID,
+			FromUserName: p.getUserName(data.UserID),
+			Message:      data.Text,
+			Direct:       strings.HasPrefix(data.Channel, "D"),
 		}
 		p.in <- msg
 	}
+}
+
+func (p *providerSlack) getUserName(id string) string {
+	p.mu.Lock()
+	if name, ok := p.usernames[id]; ok {
+		p.mu.Unlock()
+		return name
+	}
+	p.mu.Unlock()
+
+	log.Println("slack: reading username from id")
+	resp, err := http.Get(fmt.Sprint(urlSlackAPI, "users.info?token=", p.token, "&user=", url.QueryEscape(id)))
+	if err != nil {
+		log.Println("slack: failed reading username - returning blank")
+		return ""
+	}
+	defer resp.Body.Close()
+
+	var data struct {
+		OK   interface{} `json:"ok"`
+		User struct {
+			Name string `json:"name"`
+		} `json:"user"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
+		log.Println("slack: failed parsing username - returning blank")
+		return ""
+	}
+
+	p.mu.Lock()
+	p.usernames[id] = data.User.Name
+	p.mu.Unlock()
+
+	log.Printf("slack: %s is %v", id, data.User.Name)
+	return p.usernames[id]
 }
 
 func (p *providerSlack) dispatchLoop() {
