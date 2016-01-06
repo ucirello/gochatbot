@@ -193,18 +193,6 @@ var cronRules = map[string]cron.Rule{
 }
 ```
 
-### Other ruleset
-
-#### Reddit ruleset
-
-It is possible to track Reddit content with gochatbot. Useful when the team
-needs to monitor it for upcoming events, like release notifications.
-
-```
-reddit follow subreddit- follow one subreddit in a room
-reddit unfollow subreddit - unfollow one subreddit in a room
-```
-
 ### Integrating with other languages (RPC)
 
 If `GOCHATBOT_RPC_BIND` is set, gochatbot will open a HTTP server in the given
@@ -297,6 +285,19 @@ an example of a plugin.
 
 It also means that, as long as you are to execute the file, your plugin can be
 written in any language.
+
+#### Reddit plugin
+
+It is possible to track Reddit content with gochatbot. Useful when the team
+needs to monitor it for upcoming events, like release notifications.
+
+```
+reddit follow subreddit- follow one subreddit in a room
+reddit unfollow subreddit - unfollow one subreddit in a room
+```
+
+Compile `plugins/gochatbot-plugin-reddit`, and place the resulting binary in the
+same working directory of main gochatbot binary.
 
 ### Guarantees
 
