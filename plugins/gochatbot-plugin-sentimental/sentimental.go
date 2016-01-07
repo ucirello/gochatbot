@@ -68,7 +68,7 @@ func (r SentimentalPlugin) helpMessage() string {
 
 func (r *SentimentalPlugin) parseMessage(in *messages.Message) error {
 	msg := strings.TrimSpace(in.Message)
-	checkPrefix := r.botName + " check on"
+	checkPrefix := r.botName + " check on "
 	if msg == "" || (strings.HasPrefix(msg, r.botName) && !strings.HasPrefix(msg, checkPrefix)) {
 		return nil
 	}
@@ -86,7 +86,8 @@ func (r *SentimentalPlugin) parseMessage(in *messages.Message) error {
 				Message:    "no sentiment on anybody collected yet",
 			})
 		}
-		username := strings.TrimPrefix(strings.TrimSpace(msg), checkPrefix)
+		username := strings.TrimSpace(strings.TrimPrefix(strings.TrimSpace(msg), checkPrefix))
+		log.Printf("sentimental: checking user `%s`", username)
 		if username == "everyone" {
 			var out string
 			for u, sc := range scorecard {
