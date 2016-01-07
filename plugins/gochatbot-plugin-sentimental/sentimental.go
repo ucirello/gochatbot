@@ -74,15 +74,47 @@ func (r *SentimentalPlugin) parseMessage(in *messages.Message) error {
 	}
 
 	if strings.HasPrefix(msg, checkPrefix) {
+		scorecard, err := r.readUsersSentiment()
+		if err != nil {
+			return err
+		}
+		if len(scorecard) == 0 {
+			return r.comm.Send(&messages.Message{
+				Room:       in.Room,
+				ToUserID:   in.FromUserID,
+				ToUserName: in.FromUserName,
+				Message:    "no sentiment on anybody collected yet",
+			})
+		}
 		username := strings.TrimPrefix(strings.TrimSpace(msg), checkPrefix)
-		log.Println("sentimental: state for ", username)
-		return nil
-		// return r.comm.Send(&messages.Message{
-		// 	Room:       in.Room,
-		// 	ToUserID:   in.FromUserID,
-		// 	ToUserName: in.FromUserName,
-		// 	Message:    r.helpMessage(),
-		// })
+		if username == "everyone" {
+			var out string
+			for u, sc := range scorecard {
+				out = fmt.Sprintln(out, u, "has a happiness average of", sc.Average)
+			}
+			return r.comm.Send(&messages.Message{
+				Room:       in.Room,
+				ToUserID:   in.FromUserID,
+				ToUserName: in.FromUserName,
+				Message:    out,
+			})
+		}
+		if _, ok := scorecard[username]; !ok && username != "everyone" {
+			return r.comm.Send(&messages.Message{
+				Room:       in.Room,
+				ToUserID:   in.FromUserID,
+				ToUserName: in.FromUserName,
+				Message:    fmt.Sprintf("%s has no happiness average yet", username),
+			})
+		}
+
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    fmt.Sprintln(username, "has a happiness average of", scorecard[username].Average),
+		})
+
 	}
 
 	if in.FromUserName == "" {
