@@ -47,6 +47,12 @@ Telegram message provider
 RPC
  * `GOCHATBOT_RPC_BIND` - local IP address to bind the RPC HTTP server
 
+### Quick start (Compiled)
+
+```ShellSession
+# go get -tags all cirello.io/gochatbot/...
+```
+
 ### Quick start (Docker version - Slack - Non-durable memory)
 
 ```ShellSession
