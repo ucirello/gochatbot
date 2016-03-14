@@ -50,6 +50,15 @@ func (r GoAppReleasePlugin) helpMessage() string {
 }
 
 func (r *GoAppReleasePlugin) parseMessage(in *messages.Message) error {
+	if in.Message == r.botName+" release" || in.Message == "help" || in.Message == "release help" {
+		return r.comm.Send(&messages.Message{
+			Room:       in.Room,
+			ToUserID:   in.FromUserID,
+			ToUserName: in.FromUserName,
+			Message:    r.helpMessage(),
+		})
+	}
+
 	msg := strings.TrimSpace(in.Message)
 	checkPrefix := r.botName + " release "
 	if msg == "" || !strings.HasPrefix(msg, checkPrefix) {
