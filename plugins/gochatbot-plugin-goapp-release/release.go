@@ -96,6 +96,6 @@ func (r *GoAppReleasePlugin) parseMessage(in *messages.Message) error {
 		Room:       in.Room,
 		ToUserID:   in.FromUserID,
 		ToUserName: in.FromUserName,
-		Message:    fmt.Sprintf("Release:\n```\n%s\n```", outAppcfg),
+		Message:    fmt.Sprintf("Release log:\n```\n%s\n```", outAppcfg),
 	})
 }
