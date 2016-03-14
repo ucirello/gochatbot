@@ -52,7 +52,7 @@ func (r GoAppReleasePlugin) helpMessage() string {
 func (r *GoAppReleasePlugin) parseMessage(in *messages.Message) error {
 	msg := strings.TrimSpace(in.Message)
 	checkPrefix := r.botName + " release "
-	if msg == "" || (strings.HasPrefix(msg, r.botName) && !strings.HasPrefix(msg, checkPrefix)) {
+	if msg == "" || !strings.HasPrefix(msg, checkPrefix) {
 		return nil
 	}
 
