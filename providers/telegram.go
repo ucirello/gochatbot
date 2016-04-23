@@ -87,7 +87,7 @@ func (p *providerTelegram) intakeLoop() {
 			for update := range upds {
 				senderID := strconv.Itoa(update.Message.From.ID)
 				senderName := update.Message.From.FirstName
-				targetID := strconv.Itoa(update.Message.Chat.ID)
+				targetID := strconv.FormatInt(update.Message.Chat.ID, 10)
 				targetName := update.Message.Chat.FirstName
 				msg := messages.Message{
 					Room:         "",
@@ -108,7 +108,7 @@ func (p *providerTelegram) intakeLoop() {
 func (p *providerTelegram) dispatchLoop() {
 	log.Println("telegram: started message dispatch loop")
 	for msg := range p.out {
-		id, err := strconv.Atoi(msg.ToUserID)
+		id, err := strconv.ParseInt(msg.ToUserID, 10, 64)
 		if err != nil {
 			continue
 		}
