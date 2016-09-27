@@ -37,10 +37,11 @@ func init() {
 }
 
 type providerSlack struct {
-	token  string
-	wsURL  string
-	wsConn *websocket.Conn
-	selfID string
+	token    string
+	wsURL    string
+	selfID   string
+	wsConnMu sync.Mutex
+	wsConn   *websocket.Conn
 
 	in  chan messages.Message
 	out chan messages.Message
@@ -105,7 +106,6 @@ func (p *providerSlack) handshake() {
 		if !v {
 			p.err = err
 			return
-
 		}
 	default:
 		p.err = err
@@ -126,7 +126,9 @@ func (p *providerSlack) dial() {
 		p.err = err
 		return
 	}
+	p.wsConnMu.Lock()
 	p.wsConn = ws
+	p.wsConnMu.Unlock()
 }
 
 func (p *providerSlack) intakeLoop() {
@@ -138,9 +140,15 @@ func (p *providerSlack) intakeLoop() {
 			UserID  string `json:"user"`
 			Text    string `json:"text"`
 		}
-		if err := json.NewDecoder(p.wsConn).Decode(&data); err != nil {
+
+		p.wsConnMu.Lock()
+		wsConn := p.wsConn
+		p.wsConnMu.Unlock()
+
+		if err := json.NewDecoder(wsConn).Decode(&data); err != nil {
 			continue
 		}
+
 		if data.Type != "message" {
 			continue
 		}
@@ -219,7 +227,13 @@ func (p *providerSlack) dispatchLoop() {
 		if len(wsMsg) > 16*1024 {
 			continue
 		}
-		fmt.Fprint(p.wsConn, wsMsg)
+
+		p.wsConnMu.Lock()
+		wsConn := p.wsConn
+		p.wsConnMu.Unlock()
+
+		fmt.Fprint(wsConn, wsMsg)
+
 		time.Sleep(1 * time.Second) // https://api.slack.com/docs/rate-limits
 	}
 }
@@ -227,13 +241,18 @@ func (p *providerSlack) dispatchLoop() {
 func (p *providerSlack) reconnect() {
 	for {
 		time.Sleep(1 * time.Second)
-		if p.wsConn == nil {
+
+		p.wsConnMu.Lock()
+		wsConn := p.wsConn
+		p.wsConnMu.Unlock()
+
+		if wsConn == nil {
 			log.Println("slack: cannot reconnect")
 			break
 		}
-		_, err := p.wsConn.Write([]byte(`{"type":"hello"}`))
-		if err != nil {
-			log.Println("slack: reconnecting")
+
+		if _, err := wsConn.Write([]byte(`{"type":"hello"}`)); err != nil {
+			log.Printf("slack: reconnecting (%v)", err)
 			p.handshake()
 			p.dial()
 		}
